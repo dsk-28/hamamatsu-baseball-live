@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>浜松南 野球速報</title>
+<style>
+:root{--blue:#124c87;--light:#eef4fa;--line:#d9e0e8;--green:#16844a;--red:#c63c3c}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:#f3f5f7;color:#111;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif}
+header{position:sticky;top:0;z-index:10;background:var(--blue);color:#fff;padding:13px 14px calc(11px + env(safe-area-inset-top));padding-top:calc(13px + env(safe-area-inset-top))}
+h1{font-size:20px;margin:0}.small{font-size:12px;color:#697586}.white{color:#dbeafe}
+main{max-width:600px;margin:auto;padding:10px 10px 100px}
+.card{background:#fff;border-radius:15px;padding:13px;margin-bottom:10px;box-shadow:0 2px 8px #0000000b}
+.row{display:flex;gap:8px;align-items:center}.between{justify-content:space-between}
+button{border:0;border-radius:11px;background:#e9eef4;color:#153e66;font-size:16px;font-weight:700;min-height:48px;padding:9px 8px}
+button:active{transform:scale(.98)}button.primary{background:var(--blue);color:#fff}button.green{background:var(--green);color:#fff}
+button.red{background:var(--red);color:#fff}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}.inning{font-size:24px;font-weight:800}
+.score{font-size:38px;font-weight:900}.player{font-size:20px;font-weight:800}
+.result.selected{outline:3px solid #1c70b7;background:#e6f2ff}.hidden{display:none}
+.log{padding:9px 3px;border-bottom:1px solid #edf0f3;font-size:15px}.log:last-child{border:0}
+textarea,input,select{font:inherit;width:100%;border:1px solid var(--line);border-radius:10px;padding:11px;background:#fff}
+textarea{min-height:190px}.num{font-size:12px;color:#667085}.tab{display:flex;gap:7px}.tab button{flex:1}.tab .on{background:#153e66;color:#fff}
+.status{background:#f5f7fa;border-radius:10px;padding:9px;margin-top:8px;font-size:13px;line-height:1.5}
+.lr{display:grid;grid-template-columns:42px 1fr;gap:7px;align-items:center;margin-bottom:7px}
+.preview{width:100%;max-height:260px;object-fit:contain;background:#111;border-radius:10px;margin-top:8px}
+.badge{display:inline-block;background:#e8f0f8;border-radius:99px;padding:5px 9px;font-size:12px;color:#153e66}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:10px 16px;border-radius:22px;display:none;z-index:30}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+</head>
+<body>
+<header><h1>⚾ 浜松南 野球速報</h1><div class="white">入力内容はこのiPhoneに自動保存</div></header>
+<main>
+
+<section class="card">
+ <div class="row between">
+  <div><div class="small">① スタメン登録</div><div class="player">1番〜9番</div></div>
+  <button id="toggleLineup">開く</button>
+ </div>
+ <div id="lineupArea" class="hidden" style="margin-top:10px">
+  <div class="status">メンバー表写真を選択するとOCRで氏名を読み取ります。読み取り後は必ず9人分を確認・修正して保存してください。</div>
+  <input id="photo" type="file" accept="image/*" capture="environment" style="margin-top:8px">
+  <img id="preview" class="preview hidden">
+  <button class="primary" id="ocrBtn" style="width:100%;margin-top:8px">📷 写真から読み取る</button>
+  <div id="ocrStatus" class="status">現在：未登録</div>
+  <div id="lineupEditor" style="margin-top:9px"></div>
+  <button class="green" id="saveLineup" style="width:100%;margin-top:5px">スタメンを保存</button>
+ </div>
+</section>
+
+<section class="card">
+ <div class="row between">
+  <div><div class="small">現在の攻撃</div><div class="inning" id="inningLabel">1回表</div></div>
+  <div style="text-align:right"><div class="small">浜松南</div><div class="score" id="score">0</div></div>
+ </div>
+ <div class="tab" style="margin-top:10px"><button id="prevInn">‹ 前</button><button class="on" id="nowInn">1回表</button><button id="nextInn">次 ›</button></div>
+</section>
+
+<section class="card">
+ <div class="row between">
+  <div><div class="small">現在の打者</div><div class="player" id="batter">1番　選手名未登録</div></div>
+  <div class="num" id="plate">打席 1</div>
+ </div>
+ <div class="badge" id="registeredBadge" style="margin-top:7px">スタメン未登録</div>
+ <div style="height:9px"></div>
+ <div class="grid" id="resultGrid"></div>
+</section>
+
+<section class="card hidden" id="positionCard">
+ <div class="player">相手の守備位置</div>
+ <div class="small" style="margin:3px 0 9px">必要なプレーだけ選択してください</div>
+ <div class="grid" id="positionGrid"></div>
+ <button style="width:100%;margin-top:8px" id="noPosition">守備位置なしで確定</button>
+</section>
+
+<section class="card">
+ <div class="grid2"><button class="primary" id="confirm">この打席を確定</button><button id="nextBatter">次の打者</button></div>
+ <div style="height:7px"></div>
+ <div class="grid2"><button id="subBtn">選手交代</button><button id="undoBtn">↩ 1つ戻す</button></div>
+</section>
+
+<section class="card hidden" id="subCard">
+ <div class="player">選手交代</div>
+ <div class="small" style="margin:4px 0 8px">交代する打順を選んでください</div>
+ <select id="subOrder"></select>
+ <div style="height:8px"></div><input id="subIn" placeholder="入る選手名">
+ <div style="height:8px"></div><button class="green" style="width:100%" id="saveSub">交代を記録</button>
+</section>
+
+<section class="card">
+ <div class="row between"><div class="player">このイニング</div><button id="clearInn">イニング取消</button></div>
+ <div id="logs" style="margin-top:7px"></div>
+</section>
+
+<section class="card">
+ <div class="row between"><div class="player">速報</div><button class="green" id="makePost">速報を作成</button></div>
+ <div id="postArea" class="hidden" style="margin-top:9px">
+  <textarea id="postText"></textarea>
+  <div class="grid2" style="margin-top:8px"><button id="copy">コピー</button><button class="green" id="share">LINE等へ共有</button></div>
+ </div>
+</section>
+
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+const KEY="hamamatsu_live_v4";
+const RESULTS=["ヒット","2塁打","3塁打","本塁打","四球","死球","犠打","犠飛","三振","ゴロ","フライ","エラー","その他"];
+const POSITIONS=["投手","捕手","一塁","二塁","三塁","遊撃","左翼","中堅","右翼"];
+
+let state=JSON.parse(localStorage.getItem(KEY)||"null")||{
+ inning:1,half:"表",score:0,batter:0,members:Array(9).fill("選手名未登録"),plays:[],pending:null
+};
+
+function save(){localStorage.setItem(KEY,JSON.stringify(state))}
+function toast(t){const e=document.getElementById("toast");e.textContent=t;e.style.display="block";clearTimeout(window._toast);window._toast=setTimeout(()=>e.style.display="none",1600)}
+function currentName(){return state.members[state.batter]||"選手名未登録"}
+function currentPA(){return state.plays.filter(p=>p.type==="打席"&&p.inning===state.inning&&p.half===state.half&&p.batter===state.batter).length+1}
+
+function render(){
+ document.getElementById("inningLabel").textContent=state.inning+"回"+state.half;
+ document.getElementById("nowInn").textContent=state.inning+"回"+state.half;
+ document.getElementById("score").textContent=state.score;
+ document.getElementById("batter").textContent=(state.batter+1)+"番　"+currentName();
+ document.getElementById("plate").textContent="打席 "+currentPA();
+ document.getElementById("registeredBadge").textContent=state.members.every(n=>n!=="選手名未登録")?"スタメン登録済み":"スタメン未登録";
+ renderLogs();renderSub();save();
+}
+function renderLogs(){
+ const a=state.plays.filter(p=>p.inning===state.inning&&p.half===state.half);
+ document.getElementById("logs").innerHTML=a.length?a.map(p=>p.type==="交代"
+ ?`<div class="log">選手交代：${p.out} → ${p.in}</div>`
+ :`<div class="log">${p.batterNo}番 ${p.name}：<b>${p.result}</b>${p.pos?"（"+p.pos+"）":""}</div>`
+ ).join(""):"<div class='small'>まだ入力されていません</div>";
+}
+function renderSub(){
+ document.getElementById("subOrder").innerHTML=state.members.map((n,i)=>`<option value="${i}">${i+1}番　${n}</option>`).join("");
+}
+function clearPending(){
+ state.pending=null;
+ document.getElementById("positionCard").classList.add("hidden");
+ document.querySelectorAll(".result").forEach(x=>x.classList.remove("selected"));
+}
+function selectResult(r){
+ state.pending={result:r,pos:""};
+ document.querySelectorAll(".result").forEach(x=>x.classList.toggle("selected",x.textContent===r));
+ if(["ヒット","2塁打","3塁打","本塁打","犠打","犠飛","ゴロ","フライ"].includes(r)){
+   document.getElementById("positionCard").classList.remove("hidden");toast("相手の守備位置を選択してください");
+ }else finishPending();
+}
+function finishPending(){
+ if(!state.pending){toast("結果を選択してください");return}
+ const p={type:"打席",inning:state.inning,half:state.half,batter:state.batter,batterNo:state.batter+1,name:currentName(),result:state.pending.result,pos:state.pending.pos};
+ state.plays.push(p);
+ if(p.result==="本塁打")state.score++;
+ clearPending();render();toast("打席を記録しました");
+}
+function nextBatter(){
+ state.batter=(state.batter+1)%9;clearPending();render();toast((state.batter+1)+"番打者");
+}
+function changeInning(d){
+ if(d>0){
+   if(state.half==="表")state.half="裏";else{state.half="表";state.inning++}
+ }else{
+   if(state.half==="裏")state.half="表";
+   else if(state.inning>1){state.inning--;state.half="裏"}
+   else{toast("これ以上戻れません");return}
+ }
+ state.batter=0;clearPending();render();
+}
+document.getElementById("resultGrid").innerHTML=RESULTS.map(r=>`<button class="result">${r}</button>`).join("");
+document.querySelectorAll(".result").forEach(b=>b.onclick=()=>selectResult(b.textContent));
+document.getElementById("positionGrid").innerHTML=POSITIONS.map(p=>`<button>${p}</button>`).join("");
+document.querySelectorAll("#positionGrid button").forEach(b=>b.onclick=()=>{if(state.pending){state.pending.pos=b.textContent;finishPending()}});
+document.getElementById("noPosition").onclick=finishPending;
+document.getElementById("confirm").onclick=finishPending;
+document.getElementById("nextBatter").onclick=nextBatter;
+document.getElementById("nextInn").onclick=()=>changeInning(1);
+document.getElementById("prevInn").onclick=()=>changeInning(-1);
+
+document.getElementById("undoBtn").onclick=()=>{
+ const i=state.plays.length-1;
+ if(i<0){toast("戻せる入力がありません");return}
+ const p=state.plays.pop();
+ if(p.result==="本塁打")state.score=Math.max(0,state.score-1);
+ render();toast("直前の入力を取り消しました");
+};
+document.getElementById("clearInn").onclick=()=>{
+ state.plays=state.plays.filter(p=>!(p.inning===state.inning&&p.half===state.half));render();toast("このイニングを取消しました");
+};
+
+document.getElementById("subBtn").onclick=()=>document.getElementById("subCard").classList.toggle("hidden");
+document.getElementById("saveSub").onclick=()=>{
+ const idx=Number(document.getElementById("subOrder").value),name=document.getElementById("subIn").value.trim();
+ if(!name){toast("入る選手名を入力してください");return}
+ const old=state.members[idx];state.members[idx]=name;
+ state.plays.push({type:"交代",inning:state.inning,half:state.half,out:old,in:name});
+ document.getElementById("subIn").value="";render();toast((idx+1)+"番を交代しました");
+};
+
+function lineupEditor(names){
+ document.getElementById("lineupEditor").innerHTML=names.map((n,i)=>
+ `<div class="lr"><b>${i+1}番</b><input data-i="${i}" value="${String(n||"").replaceAll('"',"&quot;")}" placeholder="選手名"></div>`
+ ).join("");
+}
+document.getElementById("toggleLineup").onclick=()=>{
+ const a=document.getElementById("lineupArea");a.classList.toggle("hidden");
+ document.getElementById("toggleLineup").textContent=a.classList.contains("hidden")?"開く":"閉じる";
+ lineupEditor(state.members);
+};
+document.getElementById("saveLineup").onclick=()=>{
+ const names=[...document.querySelectorAll("#lineupEditor input")].map(x=>x.value.trim()||"選手名未登録");
+ if(names.length!==9){toast("9人分を確認してください");return}
+ state.members=names;state.batter=0;clearPending();save();render();toast("スタメンを保存しました");
+};
+
+document.getElementById("photo").onchange=e=>{
+ const f=e.target.files[0];if(!f)return;
+ const img=document.getElementById("preview");img.src=URL.createObjectURL(f);img.classList.remove("hidden");
+};
+document.getElementById("ocrBtn").onclick=async()=>{
+ const f=document.getElementById("photo").files[0];
+ if(!f){toast("先にメンバー表写真を選択してください");return}
+ if(!window.Tesseract){toast("OCRを読み込めません");return}
+ const s=document.getElementById("ocrStatus");s.textContent="写真を読み取っています…";
+ try{
+   const r=await Tesseract.recognize(f,"jpn+eng",{logger:m=>{if(m.progress)s.textContent=`写真を読み取り中… ${Math.round(m.progress*100)}%`}});
+   let lines=r.data.text.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+   let names=[];
+   for(const line of lines){
+     let x=line.replace(/^\s*\d{1,2}\s*[.、:：\-]?\s*/,"").trim();
+     if(x.length>=2 && /[一-龯ぁ-んァ-ヶ]/.test(x))names.push(x);
+   }
+   names=names.slice(0,9);while(names.length<9)names.push("選手名未登録");
+   lineupEditor(names);
+   s.textContent=names.some(n=>n!=="選手名未登録")?"読み取り結果を確認・修正してから保存してください。":"氏名を判定できませんでした。手入力してください。";
+ }catch(e){s.textContent="読み取りに失敗しました。手入力してください。"}
+};
+
+document.getElementById("makePost").onclick=()=>{
+ const a=state.plays.filter(p=>p.inning===state.inning&&p.half===state.half);
+ const lines=a.map(p=>p.type==="交代"?`選手交代：${p.out} → ${p.in}`:`${p.batterNo}番 ${p.name}：${p.result}${p.pos?"（"+p.pos+"）":""}`);
+ document.getElementById("postText").value=`【${state.inning}回${state.half}】\n${lines.length?lines.join("\n"):"入力なし"}\n\n浜松南 ${state.score}`;
+ document.getElementById("postArea").classList.remove("hidden");
+};
+document.getElementById("copy").onclick=async()=>{
+ const t=document.getElementById("postText").value;
+ try{await navigator.clipboard.writeText(t)}catch(e){document.getElementById("postText").select();document.execCommand("copy")}
+ toast("速報をコピーしました");
+};
+document.getElementById("share").onclick=async()=>{
+ const t=document.getElementById("postText").value;
+ if(navigator.share){try{await navigator.share({text:t})}catch(e){}}
+ else document.getElementById("copy").click();
+};
+
+lineupEditor(state.members);render();
+</script>
+</body>
+</html>
