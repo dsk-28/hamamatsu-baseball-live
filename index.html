@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>浜松南 野球速報 実用版</title>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>
 :root{--b:#124c87;--l:#e9eef4;--g:#16844a}
 *{box-sizing:border-box}body{margin:0;background:#f3f5f7;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif;color:#111}
@@ -37,7 +36,13 @@ textarea{min-height:180px}.toast{position:fixed;bottom:20px;left:50%;transform:t
 <div id="setup" class="hide" style="margin-top:10px">
 <div class="s">浜松南の攻撃順</div>
 <div class="grid2" style="margin:7px 0"><button id="first">先攻</button><button id="second">後攻</button></div>
-<div class="note"><b>新機能：メンバー表写真を読み取り</b><br>LINEで届いたメンバー表を写真からOCRで読み取り、9人の名前欄へ反映できます。読み取り後は必ず名前を確認・修正してください。</div>
+<div class="note"><b>メンバー表写真を読み取り</b><br>
+LINEで届いたメンバー表を写真から日本語OCRで読み取り、9人の名前候補を作ります。読み取り後は必ず名前を確認・修正してください。<br>
+<span class="small">※写真はOCR処理のため外部OCRサービスへ送信されます。</span></div>
+<div style="margin-top:8px">
+<div class="s">OCR APIキー（初回テストは helloworld のままでOK）</div>
+<input id="ocrKey" type="password" placeholder="OCR APIキー">
+</div>
 <input id="photo" class="photo" type="file" accept="image/*">
 <button id="ocr" class="green" style="width:100%;margin-top:8px">📷 メンバー表の写真を読み取る</button>
 <div id="ocrStatus" class="small" style="margin-top:7px"></div>
@@ -216,89 +221,73 @@ st.batter=0;save();$('setup').classList.add('hide');render();toast('スタメン
 // メンバー表写真OCR
 $('ocr').onclick=()=>$('photo').click();
 
-function makeOCRImage(file, mode){
-return new Promise((resolve,reject)=>{
-const img=new Image(), url=URL.createObjectURL(file);
-img.onload=()=>{
-const scale=mode===0?2.5:3.0;
-const c=document.createElement('canvas');
-c.width=Math.round(img.naturalWidth*scale);c.height=Math.round(img.naturalHeight*scale);
-const x=c.getContext('2d',{willReadFrequently:true});
-x.drawImage(img,0,0,c.width,c.height);
-let d=x.getImageData(0,0,c.width,c.height), a=d.data;
-for(let i=0;i<a.length;i+=4){
-let y=0.299*a[i]+0.587*a[i+1]+0.114*a[i+2];
-if(mode===1){y=Math.max(0,Math.min(255,(y-128)*1.8+128))}
-if(mode===2){y=y>155?255:0}
-a[i]=a[i+1]=a[i+2]=y;
+function getOCRKey(){
+let k=localStorage.getItem('hamamatsu_ocr_key')||'helloworld';
+$('ocrKey').value=k;
+return k;
 }
-x.putImageData(d,0,0);URL.revokeObjectURL(url);
-resolve(c.toDataURL('image/jpeg',0.95));
-};img.onerror=reject;img.src=url;
-});
-}
+getOCRKey();
+$('ocrKey').onchange=()=>localStorage.setItem('hamamatsu_ocr_key',$('ocrKey').value.trim()||'helloworld');
+
+$('ocr').onclick=()=>$('photo').click();
 
 $('photo').onchange=async e=>{
 const file=e.target.files&&e.target.files[0];if(!file)return;
 $('ocrResult').classList.add('hide');$('prog').classList.remove('hide');
-$('bar').style.width='2%';$('ocrStatus').textContent='写真を前処理しています…';
+$('bar').style.width='5%';$('ocrStatus').textContent='メンバー表をOCRサービスへ送信しています…';
 try{
-const texts=[];
-for(let mode=0;mode<3;mode++){
-$('ocrStatus').textContent='メンバー表を高画質で読み取り中… '+(mode+1)+'/3';
-const img=await makeOCRImage(file,mode);
-const result=await Tesseract.recognize(img,'jpn',{
-logger:m=>{
-if(m.status==='recognizing text'){
-let pct=Math.round((m.progress||0)*100/3+(mode*100/3));
-$('bar').style.width=pct+'%';
-}}
-});
-texts.push(result.data.text||'');
+let fd=new FormData();
+fd.append('apikey',getOCRKey());
+fd.append('language','jpn');
+fd.append('OCREngine','3');
+fd.append('isOverlayRequired','true');
+fd.append('isTable','true');
+fd.append('detectOrientation','true');
+fd.append('scale','true');
+fd.append('file',file,file.name||'member.jpg');
+
+$('bar').style.width='25%';
+let res=await fetch('https://api.ocr.space/parse/image',{method:'POST',body:fd});
+if(!res.ok)throw new Error('HTTP '+res.status);
+let data=await res.json();
+$('bar').style.width='80%';
+
+if(data.IsErroredOnProcessing){
+throw new Error((data.ErrorMessage||[]).join(' ')||'OCR処理エラー');
 }
-let text=texts.sort((a,b)=>b.length-a.length)[0];
+let text=(data.ParsedResults||[]).map(x=>x.ParsedText||'').join('\n').trim();
+if(!text)throw new Error('文字を読み取れませんでした');
+
 $('ocrText').value=text;
 $('ocrResult').classList.remove('hide');
 $('bar').style.width='100%';
-$('ocrStatus').textContent='3種類の画像処理で読み取りました。文字化けしている部分は下の欄で修正できます。';
-toast('高精度OCRが完了しました')
+$('ocrStatus').textContent='日本語OCRが完了しました。下の文字を確認してから9人へ反映してください。';
+toast('日本語OCRが完了しました')
 }catch(err){
 console.error(err);
-$('ocrStatus').textContent='読み取りに失敗しました。写真を明るく、真上から撮影してください。';
+$('ocrStatus').textContent='読み取りに失敗しました：'+err.message+'　写真を明るく、できるだけ正面から撮影してください。';
 toast('OCRに失敗しました')
 }finally{setTimeout(()=>$('prog').classList.add('hide'),800)}
 };
-
-function cleanLine(s){
-return s.replace(/[\u3000]/g,' ')
-.replace(/^[^\p{L}\p{N}一-龯ぁ-んァ-ヶ]*[0-9０-９]{1,2}[\s\.、:：)）-]*/u,'')
-.trim();
-}
 
 $('applyOcr').onclick=()=>{
 let raw=$('ocrText').value.split(/\n+/).map(cleanLine).filter(Boolean);
 let candidates=[];
 for(let line of raw){
-let x=line
-.replace(/[|｜]/g,' ')
-.replace(/\s+/g,' ')
-.replace(/^(?:浜松南|野球部|メンバー表|打順|背番号|守備|氏名)\s*/,'')
-.trim();
-
+let x=line.replace(/[|｜]/g,' ').replace(/\s+/g,' ').trim();
+x=x.replace(/^(?:浜松南|野球部|メンバー表|打順|背番号|守備|氏名)\s*/,'').trim();
 x=x.replace(/(?:投手|捕手|一塁手|二塁手|三塁手|遊撃手|左翼手|中堅手|右翼手|投|捕|一|二|三|遊|左|中|右)\s*$/,'').trim();
-x=x.replace(/^[^\u3400-\u9fffぁ-んァ-ヶー]+/,'').trim();
-
-if(x && x.length>=2 && x.length<=12 &&
-/[\u3400-\u9fffぁ-んァ-ヶー]/.test(x) &&
+if(x && x.length>=2 && x.length<=12 && /[\u3400-\u9fffぁ-んァ-ヶー]/.test(x) &&
 !/^(?:浜松南|選手名|氏名|背番号|守備|打順|メンバー|控え|監督|記録員)$/.test(x))
 candidates.push(x);
 }
-
 let unique=[...new Set(candidates)];
-if(unique.length<1)
-return toast('名前を抽出できませんでした。読み取り文字欄を修正してから再度「9人を反映」を押してください');
-
+if(unique.length<1)return toast('名前を抽出できませんでした。読み取り文字欄を修正してから再度押してください');
 unique.slice(0,9).forEach((n,i)=>{st.members[i]=n});
+render();$('ocrResult').classList.add('hide');
+toast(Math.min(unique.length,9)+'人を反映しました。必ず名前を確認してください')
+};
+
 render();$('ocrResult').classList.add('hide');
 toast(Math.min(unique.length,9)+'人をスタメン欄へ反映しました。必ず名前を確認してください')
 };
