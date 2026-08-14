@@ -112,7 +112,7 @@ LINEなどで受け取ったメンバー表写真を選択してください。�
 <div class="toast" id="toast"></div>
 
 <script>
-const K='hamamatsu_live_v9';
+const K='hamamatsu_live_v10';
 const R=['ヒット','2塁打','3塁打','本塁打','四球','死球','犠打','犠飛','三振','ゴロ','フライ','エラー','その他'];
 const P=['投手','捕手','一塁','二塁','三塁','遊撃','左翼','中堅','右翼'];
 const DEFAULT_STATE={inning:1,half:'表',score:0,batter:0,members:Array(9).fill('選手名未登録'),battingFirst:true,plays:[],pending:null};
@@ -248,18 +248,33 @@ async function makeSmallJpeg(file){
     reader.onerror=reject;reader.readAsDataURL(file)
   })
 }
+function cleanNameCandidate(s){
+  s=String(s||'').replace(/[|｜]/g,'').replace(/\s+/g,' ').trim();
+  s=s.replace(/^\s*[0-9０-９]{1,2}\s*[.．、)）:：\-ー]?\s*/,'').trim();
+  s=s.replace(/^(投手|捕手|一塁手|二塁手|三塁手|遊撃手|左翼手|中堅手|右翼手|投|捕|一|二|三|遊|左|中|右)\s*/,'').trim();
+  if(!s || /^[-ー―_=]+$/.test(s)) return '';
+  if(/^[0-9０-９]+$/.test(s)) return '';
+  if(/^[0-9０-９\s.．、()（）\-ー]+$/.test(s)) return '';
+  if(/^(守備|打順|背番号|氏名|選手名|高校|学校|大会|試合|球場|登録|投手|捕手)$/.test(s)) return '';
+  if(s.length<2 || s.length>12) return '';
+  return s;
+}
 function pickNames(text){
-  let lines=text.split(/\r?\n/).map(x=>x.replace(/\s+/g,' ').trim()).filter(Boolean);
+  const raw=text.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
   let out=[];
-  for(let line of lines){
-    line=line.replace(/^\s*[0-9０-９]{1,2}\s*[.．、)）:：\-ー]?\s*/,'').trim();
-    line=line.replace(/^(投手|捕手|一塁手|二塁手|三塁手|遊撃手|左翼手|中堅手|右翼手)\s*/,'').trim();
-    line=line.replace(/[|｜]/g,'').trim();
-    if(line.length>=2&&line.length<=12&&!/[年月日|高校|学校|球場|守備位置|登録|氏名|チーム|大会|試合]/.test(line)){
-      if(!out.includes(line))out.push(line)
+  for(const rawLine of raw){
+    const parts=rawLine.split(/\t| {2,}|[|｜]/).map(x=>x.trim()).filter(Boolean);
+    const candidates=parts.length>1?parts:[rawLine];
+    for(let part of candidates){
+      let n=cleanNameCandidate(part);
+      if(!n){
+        const m=part.match(/^[0-9０-９]{1,2}\s+(.+)$/);
+        if(m)n=cleanNameCandidate(m[1]);
+      }
+      if(n && !out.includes(n)) out.push(n);
     }
   }
-  return out.slice(0,9)
+  return out.slice(0,9);
 }
 async function doOCR(file){
   $('ocrStatus').textContent='写真を読み取っています…';
