@@ -219,8 +219,6 @@ st.batter=0;save();$('setup').classList.add('hide');render();toast('スタメン
 };
 
 // メンバー表写真OCR
-$('ocr').onclick=()=>$('photo').click();
-
 function getOCRKey(){
 let k=localStorage.getItem('hamamatsu_ocr_key')||'helloworld';
 $('ocrKey').value=k;
@@ -286,14 +284,6 @@ if(unique.length<1)return toast('名前を抽出できませんでした。読�
 unique.slice(0,9).forEach((n,i)=>{st.members[i]=n});
 render();$('ocrResult').classList.add('hide');
 toast(Math.min(unique.length,9)+'人を反映しました。必ず名前を確認してください')
-};
-
-render();$('ocrResult').classList.add('hide');
-toast(Math.min(unique.length,9)+'人をスタメン欄へ反映しました。必ず名前を確認してください')
-};
-
-render();$('ocrResult').classList.add('hide');
-toast(Math.min(unique.length,9)+'人をスタメン欄へ反映しました。確認してください')
 };
 
 render();
