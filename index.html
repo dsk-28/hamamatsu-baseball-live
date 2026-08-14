@@ -113,7 +113,7 @@ LINEなどで受け取ったメンバー表写真を選択してください。�
 <div class="toast" id="toast"></div>
 
 <script>
-const K='hamamatsu_live_v10';
+const K='hamamatsu_live_v11';
 const R=['ヒット','2塁打','3塁打','本塁打','四球','死球','犠打','犠飛','三振','ゴロ','フライ','エラー','その他'];
 const P=['投手','捕手','一塁','二塁','三塁','遊撃','左翼','中堅','右翼'];
 const DEFAULT_STATE={inning:1,half:'表',score:0,batter:0,members:Array(9).fill('選手名未登録'),battingFirst:true,plays:[],pending:null};
@@ -276,10 +276,12 @@ async function loadImage(file){
 function cropRow(img,i){
   // このメンバー表の右側9行。比率指定なので写真サイズが変わっても対応。
   const W=img.naturalWidth||img.width,H=img.naturalHeight||img.height;
-  const x1=Math.round(W*0.70),x2=Math.round(W*0.965);
-  const top=H*0.306,bottom=H*0.676;
+  const x1=Math.round(W*0.715),x2=Math.round(W*0.925);
+  // この写真では1〜9番の名前欄が右ページ上部の約30.3〜57.0%に収まる。
+  // 前版は下端が広すぎて、隣の行が次の行に混入していた。
+  const top=H*0.302,bottom=H*0.570;
   const rh=(bottom-top)/9;
-  const y1=Math.round(top+i*rh-0.006*H),y2=Math.round(top+(i+1)*rh+0.006*H);
+  const y1=Math.round(top+i*rh+0.004*H),y2=Math.round(top+(i+1)*rh-0.004*H);
   const c=document.createElement('canvas');
   const scale=3;c.width=(x2-x1)*scale;c.height=(y2-y1)*scale;
   const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);
