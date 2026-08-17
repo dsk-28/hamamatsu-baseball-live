@@ -2,343 +2,99 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>浜松南 野球速報</title>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>
-:root{--b:#124c87;--l:#e9eef4;--g:#16844a}
-*{box-sizing:border-box}
-body{margin:0;background:#f3f5f7;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif;color:#111}
-header{position:sticky;top:0;z-index:5;background:var(--b);color:#fff;padding:14px}
-h1{font-size:20px;margin:0}.w{color:#dbeafe}
-.m{max-width:600px;margin:auto;padding:10px 10px 100px}
-.c{background:#fff;border-radius:15px;padding:13px;margin-bottom:10px;box-shadow:0 2px 8px #0001}
-.r{display:flex;gap:8px;align-items:center}.b{justify-content:space-between}
-.s{font-size:12px;color:#697586}.p{font-size:20px;font-weight:800}.in{font-size:20px;font-weight:800}.sc{font-size:34px;font-weight:900}
-button{border:0;border-radius:11px;background:var(--l);color:#153e66;font-size:16px;font-weight:700;min-height:48px;padding:9px}
-button.primary{background:var(--b);color:#fff}button.green{background:var(--g);color:#fff}
-button:disabled{opacity:.55}
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}
-.tab{display:flex;gap:7px}.tab button{flex:1}
-.sel{outline:3px solid #1c70b7}.hide{display:none}.log{padding:9px 3px;border-bottom:1px solid #edf0f3}
-input,textarea{font:inherit;width:100%;border:1px solid #d9e0e8;border-radius:10px;padding:11px}
-textarea{min-height:180px}.st{display:grid;grid-template-columns:35px 1fr 38px;gap:6px;align-items:center;margin:6px 0;padding:5px;border-radius:10px;background:#f8fafc}.st.dragging{opacity:.45}.st.dropover{outline:2px dashed #1c70b7;background:#eef6ff}.stname{min-width:0}.move{display:grid;grid-template-columns:1fr 1fr;gap:4px}.move button{min-height:38px;padding:4px;font-size:14px}
-.note{background:#fff8df;border-radius:10px;padding:9px;font-size:13px}
-.ocrbox{background:#eef6ff;border-radius:12px;padding:10px;margin-top:9px}
-#ocrStatus{margin-top:7px;line-height:1.5}
-.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:10px 16px;border-radius:22px;display:none;z-index:20}
+body{margin:0;background:#f4f7fb;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;color:#111}
+header{background:#2d5b93;color:white;padding:18px}h1{margin:0;font-size:25px}.sub{margin-top:4px}
+main{max-width:720px;margin:auto;padding:12px}.card{background:white;border-radius:18px;padding:16px;margin:10px 0}
+button{border:0;border-radius:12px;padding:13px;font-size:17px;font-weight:bold}
+.primary{background:#2d5b93;color:white;width:100%}.secondary{background:#e8eef6;color:#173b65}
+input[type=file]{display:none}.status{background:#edf5ff;padding:12px;border-radius:12px;margin-top:10px}
+.hint{background:#fff8df;border-radius:14px;padding:13px;margin-top:10px}
+.row{display:grid;grid-template-columns:48px 1fr 42px 42px;gap:7px;align-items:center;background:#f7f9fc;border-radius:14px;padding:8px;margin:8px 0}
+.num{text-align:center;font-weight:bold}.name{width:100%;padding:12px;border:2px solid #d9e0e8;border-radius:12px;font-size:18px}
+.arrow{padding:10px 0;background:#e9eff6;color:#244a75}.flex{display:flex;gap:8px}.flex>*{flex:1}
+.progress{height:8px;background:#e4e9f0;border-radius:9px;overflow:hidden;margin-top:9px}.bar{height:100%;width:0;background:#2d5b93}
+.preview{width:100%;max-height:360px;object-fit:contain;margin-top:10px;border-radius:12px}
+.small{font-size:13px;color:#667085}pre{white-space:pre-wrap;font-size:12px;max-height:180px;overflow:auto}
 </style>
 </head>
 <body>
-<header><h1>⚾ 浜松南 野球速報</h1><div class="w">スタメン・入力内容はこのiPhoneに自動保存</div></header>
-
-<main class="m">
-<section class="c">
-<div class="r b">
-<div><div class="s">試合設定</div><div class="p">先攻・後攻 / スタメン</div></div>
-<button id="set" class="primary">設定・編集</button>
-</div>
-<div id="sum" style="margin-top:8px"></div>
-
-<div id="setup" class="hide" style="margin-top:10px">
-<div class="s">浜松南の攻撃順</div>
-<div class="grid2" style="margin:7px 0"><button id="first">先攻</button><button id="second">後攻</button></div>
-
-<div class="ocrbox">
-<b>📷 メンバー表写真から読み取る</b>
-<div class="s" style="margin:5px 0">
-LINEなどで受け取ったメンバー表写真を選択してください。読み取った名前を確認・修正してから保存できます。
-</div>
-<input id="memberPhoto" type="file" accept="image/*" style="display:none">
-<button id="ocrBtn" class="primary" style="width:100%;margin-top:6px">写真を選択して読み取る</button>
-<div id="ocrStatus" class="s"></div>
-</div>
-
-<div class="note" style="margin-top:9px"><b>読み取り後の修正</b><br>名前を直接修正できます。順番がずれた場合は、行を長押しして移動するか、▲▼で入れ替えできます。</div>
-<div id="edit" style="margin-top:9px"></div>
-<button id="save" class="green" style="width:100%;margin-top:7px">スタメンを保存して試合開始</button>
-</div>
+<header><h1>⚾ 浜松南 野球速報</h1><div class="sub">スタメン・入力内容はこのiPhoneに自動保存</div></header>
+<main>
+<section class="card">
+<label for="photo"><button class="primary" type="button" onclick="document.getElementById('photo').click()">📷 写真を選択して読み取る</button></label>
+<input id="photo" type="file" accept="image/*">
+<div id="status" class="status">写真を選択してください。</div>
+<div class="progress"><div id="bar" class="bar"></div></div>
+<img id="preview" class="preview" hidden>
+<div class="hint"><b>読み取り後の修正</b><br>名前は直接修正できます。順番がずれた場合は、▲▼で入れ替えできます。</div>
 </section>
-
-<section class="c">
-<div class="r b">
-<div><div class="s">現在の攻撃</div><div class="in" id="inn">1回表</div></div>
-<div style="text-align:right"><div class="s">浜松南</div><div class="sc" id="score">0</div></div>
-</div>
-<div class="tab" style="margin-top:10px">
-<button id="prev">‹ 前</button><button id="now" class="primary">1回表</button><button id="next">次 ›</button>
-</div>
+<section class="card">
+<div class="flex"><button class="secondary" onclick="clearNames()">全員クリア</button><button class="secondary" onclick="loadSaved()">保存データを復元</button></div>
+<div id="rows"></div>
+<button class="primary" onclick="saveNames()" style="margin-top:8px">💾 スタメンを保存</button>
 </section>
-
-<section class="c">
-<div class="r b">
-<div><div class="s">現在の打者</div><div class="p" id="bat">1番　選手名未登録</div></div>
-<div class="s" id="slot">打順 1番</div>
-</div>
-<div style="height:9px"></div><div class="grid" id="results"></div>
-</section>
-
-<section class="c hide" id="pos">
-<div class="p">相手の守備位置</div><div class="s">必要なプレーだけ選択してください</div>
-<div class="grid" id="positions" style="margin-top:8px"></div>
-<button id="nop" style="width:100%;margin-top:8px">守備位置なしで確定</button>
-</section>
-
-<section class="c">
-<div class="grid2"><button id="confirm" class="primary">この打席を確定</button><button id="nextbat">次の打者</button></div>
-<div style="height:7px"></div>
-<div class="grid2"><button id="sub">選手交代</button><button id="undo">↩ 1つ戻す</button></div>
-</section>
-
-<section class="c">
-<div class="r b"><div class="p">このイニング</div><button id="clear">イニング取消</button></div>
-<div id="logs"></div>
-</section>
-
-<section class="c">
-<div class="r b"><div class="p">速報</div><button id="make" class="green">速報を作成</button></div>
-<div id="post" class="hide" style="margin-top:9px">
-<textarea id="text"></textarea>
-<div class="grid2" style="margin-top:8px"><button id="copy">コピー</button><button id="share" class="green">共有</button></div>
-</div>
-</section>
-
-<section class="c hide" id="subcard">
-<div class="p">選手交代</div><div class="s">交代前 → 交代後</div>
-<div class="grid2"><input id="out" placeholder="交代する選手"><input id="into" placeholder="入る選手"></div>
-<button id="savesub" class="green" style="width:100%;margin-top:8px">交代を記録</button>
-</section>
+<section class="card"><div class="small">OCR確認用</div><pre id="log"></pre></section>
 </main>
-
-<div class="toast" id="toast"></div>
-
 <script>
-const K='hamamatsu_live_v11';
-const R=['ヒット','2塁打','3塁打','本塁打','四球','死球','犠打','犠飛','三振','ゴロ','フライ','エラー','その他'];
-const P=['投手','捕手','一塁','二塁','三塁','遊撃','左翼','中堅','右翼'];
-const DEFAULT_STATE={inning:1,half:'表',score:0,batter:0,members:Array(9).fill('選手名未登録'),battingFirst:true,plays:[],pending:null};
-let st;
-try{const raw=localStorage.getItem(K);st=raw?JSON.parse(raw):null}catch(e){st=null}
-if(!st||typeof st!=='object')st=JSON.parse(JSON.stringify(DEFAULT_STATE));
-if(!Array.isArray(st.members)||st.members.length!==9)st.members=Array(9).fill('選手名未登録');
-if(!Array.isArray(st.plays))st.plays=[];
-st.pending=null;
-
-const $=id=>document.getElementById(id);
-const save=()=>localStorage.setItem(K,JSON.stringify(st));
-
-function toast(t){
-  $('toast').textContent=t;$('toast').style.display='block';
-  clearTimeout(window.tt);window.tt=setTimeout(()=>$('toast').style.display='none',1600)
-}
-function esc(x){
-  return String(x||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
-}
-function setup(){
-  $('first').className=st.battingFirst?'primary':'';
-  $('second').className=!st.battingFirst?'primary':'';
-  $('edit').innerHTML=st.members.map((n,i)=>
-    '<div class="st" draggable="true" data-row="'+i+'">'+
-      '<b>'+(i+1)+'番</b>'+
-      '<div class="stname"><input data-i="'+i+'" value="'+esc(n)+'" placeholder="'+(i+1)+'番 選手名"></div>'+
-      '<div class="move"><button type="button" data-up="'+i+'">▲</button><button type="button" data-down="'+i+'">▼</button></div>'+
-    '</div>'
-  ).join('');
-  $('sum').innerHTML='<b>'+(st.battingFirst?'先攻':'後攻')+'　</b>スタメン '+st.members.filter(x=>x&&x!=='選手名未登録').length+'/9人登録済み';
-
-  document.querySelectorAll('#edit input').forEach(x=>x.addEventListener('input',()=>{
-    st.members[+x.dataset.i]=x.value;
-    save();
-  }));
-  document.querySelectorAll('[data-up]').forEach(b=>b.onclick=()=>swapMembers(+b.dataset.up,-1));
-  document.querySelectorAll('[data-down]').forEach(b=>b.onclick=()=>swapMembers(+b.dataset.down,1));
-
-  let dragIndex=null;
-  document.querySelectorAll('#edit .st').forEach(row=>{
-    row.addEventListener('dragstart',e=>{
-      dragIndex=+row.dataset.row;row.classList.add('dragging');
-      e.dataTransfer.effectAllowed='move';
-    });
-    row.addEventListener('dragend',()=>{dragIndex=null;row.classList.remove('dragging');document.querySelectorAll('#edit .st').forEach(x=>x.classList.remove('dropover'))});
-    row.addEventListener('dragover',e=>{e.preventDefault();row.classList.add('dropover')});
-    row.addEventListener('dragleave',()=>row.classList.remove('dropover'));
-    row.addEventListener('drop',e=>{
-      e.preventDefault();row.classList.remove('dropover');
-      const to=+row.dataset.row;
-      if(dragIndex!==null && dragIndex!==to) swapMembers(dragIndex,to-dragIndex);
-    });
-  });
-}
-function swapMembers(index,dir){
-  const to=index+dir;
-  if(to<0||to>=st.members.length)return;
-  [st.members[index],st.members[to]]=[st.members[to],st.members[index]];
-  if(st.batter===index)st.batter=to;else if(st.batter===to)st.batter=index;
-  save();setup();render();toast('打順を入れ替えました');
-}
-
+const KEY="hamamatsu_lineup_v4";
+let names=Array(9).fill("");
+const rows=document.getElementById("rows");
+function esc(s){return s.replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll('"',"&quot;")}
 function render(){
-  $('inn').textContent=st.inning+'回'+st.half;
-  $('now').textContent=st.inning+'回'+st.half;
-  $('score').textContent=st.score;
-  $('bat').textContent=(st.batter+1)+'番　'+(st.members[st.batter]||'選手名未登録');
-  $('slot').textContent='打順 '+(st.batter+1)+'番';
-  let a=st.plays.filter(p=>p.inning===st.inning&&p.half===st.half);
-  $('logs').innerHTML=a.length?a.map(p=>
-    '<div class="log">'+(p.type==='交代'
-      ?'選手交代：'+esc(p.out)+' → '+esc(p.in)
-      :esc(p.name)+'：<b>'+esc(p.result)+'</b>'+(p.pos?'（'+esc(p.pos)+'）':''))+'</div>'
-  ).join(''):'<div class="s">まだ入力されていません</div>';
-  setup();save();
+ rows.innerHTML="";
+ names.forEach((n,i)=>{
+  const d=document.createElement("div");d.className="row";
+  d.innerHTML='<div class="num">'+(i+1)+'番</div><input class="name" value="'+esc(n)+'" placeholder="選手名未登録" oninput="names['+i+']=this.value;saveSilent()"><button class="arrow" onclick="move('+i+',-1)">▲</button><button class="arrow" onclick="move('+i+',1)">▼</button>';
+  rows.appendChild(d);
+ });
 }
-function finish(){
-  if(!st.pending)return;
-  let n=st.members[st.batter]||'選手名未登録';
-  st.plays.push({type:'打席',inning:st.inning,half:st.half,name:n,result:st.pending.result,pos:st.pending.pos});
-  if(st.pending.result==='本塁打')st.score++;
-  st.pending=null;$('pos').classList.add('hide');
-  document.querySelectorAll('.result').forEach(x=>x.classList.remove('sel'));
-  st.batter=(st.batter+1)%9;render();toast('記録して次の打者へ')
+function move(i,d){let j=i+d;if(j<0||j>8)return;[names[i],names[j]]=[names[j],names[i]];render();saveSilent()}
+function saveSilent(){localStorage.setItem(KEY,JSON.stringify(names))}
+function saveNames(){saveSilent();document.getElementById("status").textContent="スタメンを保存しました。"}
+function loadSaved(){try{let x=JSON.parse(localStorage.getItem(KEY)||"[]");if(x.length===9){names=x;render();document.getElementById("status").textContent="保存データを復元しました。"}}catch(e){}}
+function clearNames(){names=Array(9).fill("");render();saveSilent()}
+function progress(x){document.getElementById("bar").style.width=x+"%"}
+async function crop(file){
+ const img=new Image(),url=URL.createObjectURL(file);
+ await new Promise((ok,no)=>{img.onload=ok;img.onerror=no;img.src=url});
+ document.getElementById("preview").src=url;document.getElementById("preview").hidden=false;
+ const c=document.createElement("canvas"),w=img.naturalWidth,h=img.naturalHeight;
+ c.width=Math.floor(w*.55*2.5);c.height=Math.floor(h*.82*2.5);
+ const x=c.getContext("2d");x.imageSmoothingEnabled=false;
+ x.drawImage(img,w*.45,h*.08,w*.55,h*.82,0,0,c.width,c.height);
+ const p=x.getImageData(0,0,c.width,c.height);
+ for(let i=0;i<p.data.length;i+=4){let g=.299*p.data[i]+.587*p.data[i+1]+.114*p.data[i+2];let v=g<185?0:255;p.data[i]=p.data[i+1]=p.data[i+2]=v}
+ x.putImageData(p,0,0);return c.toDataURL("image/png");
 }
-
-$('results').innerHTML=R.map(x=>'<button class="result">'+x+'</button>').join('');
-document.querySelectorAll('.result').forEach(b=>b.onclick=()=>{
-  let r=b.textContent;st.pending={result:r,pos:''};
-  document.querySelectorAll('.result').forEach(x=>x.classList.toggle('sel',x.textContent===r));
-  if(['ヒット','2塁打','3塁打','本塁打','犠打','犠飛','ゴロ','フライ'].includes(r)){
-    $('pos').classList.remove('hide');toast('守備位置を選択してください')
-  }else finish()
+function clean(s){return s.replace(/[ \t\r\n|]/g,"").replaceAll("齋藤","斎藤").replaceAll("齊藤","斎藤").replaceAll("斉藤","斎藤")}
+function candidates(text){
+ let a=[];
+ for(let line of text.split(/\n+/)){
+  line=clean(line).replace(/[0-9０-９一二三四五六七八九十DH\-_=:：]/g,"").replace(/[^ぁ-んァ-ヶ一-龯々]/g,"");
+  if(line.length>=3&&line.length<=6&&!a.includes(line))a.push(line);
+ }
+ return a.slice(0,9);
+}
+document.getElementById("photo").addEventListener("change",async e=>{
+ let f=e.target.files&&e.target.files[0];if(!f)return;
+ try{
+  progress(5);document.getElementById("status").textContent="写真を解析しています…";
+  let data=await crop(f);progress(20);
+  document.getElementById("status").textContent="日本語OCRを準備しています…";
+  let r=await Tesseract.recognize(data,"jpn",{logger:m=>{if(m.status==="recognizing text")progress(20+Math.round((m.progress||0)*75))}});
+  document.getElementById("log").textContent=r.data.text;
+  let got=candidates(r.data.text);names=Array(9).fill("");got.forEach((v,i)=>names[i]=v);
+  render();saveSilent();progress(100);
+  document.getElementById("status").textContent=got.length+"/9人を読み取りました。空欄や誤りは下で修正できます。";
+ }catch(err){
+  progress(0);document.getElementById("status").textContent="読み取りに失敗しました。もう一度写真を選択してください。";document.getElementById("log").textContent=String(err);
+ }
 });
-$('positions').innerHTML=P.map(x=>'<button>'+x+'</button>').join('');
-document.querySelectorAll('#positions button').forEach(b=>b.onclick=()=>{
-  if(st.pending){st.pending.pos=b.textContent;finish()}
-});
-$('nop').onclick=finish;
-$('confirm').onclick=()=>st.pending?finish():toast('結果を選択してください');
-$('nextbat').onclick=()=>{st.batter=(st.batter+1)%9;render()};
-
-function half(d){
-  if(d>0){
-    if(st.half==='表')st.half='裏';
-    else{st.half='表';st.inning++}
-  }else{
-    if(st.half==='裏')st.half='表';
-    else if(st.inning>1){st.inning--;st.half='裏'}
-  }
-  st.batter=0;st.pending=null;$('pos').classList.add('hide');render()
-}
-$('next').onclick=()=>half(1);$('prev').onclick=()=>half(-1);
-$('undo').onclick=()=>{
-  if(!st.plays.length)return toast('戻せる入力がありません');
-  let p=st.plays.pop();if(p.result==='本塁打')st.score--;
-  if(p.type==='打席')st.batter=(st.batter+8)%9;render()
-};
-$('clear').onclick=()=>{
-  st.plays=st.plays.filter(p=>!(p.inning===st.inning&&p.half===st.half));st.batter=0;render()
-};
-$('sub').onclick=()=>$('subcard').classList.toggle('hide');
-$('savesub').onclick=()=>{
-  let o=$('out').value.trim(),i=$('into').value.trim();
-  if(!o||!i)return toast('交代前・交代後を入力してください');
-  let idx=st.members.indexOf(o);if(idx>=0)st.members[idx]=i;
-  st.plays.push({type:'交代',inning:st.inning,half:st.half,out:o,in:i});
-  $('out').value='';$('into').value='';render();toast('選手交代を記録しました')
-};
-$('make').onclick=()=>{
-  let a=st.plays.filter(p=>p.inning===st.inning&&p.half===st.half);
-  let lines=a.map(p=>p.type==='交代'?'選手交代：'+p.out+' → '+p.in:p.name+'：'+p.result+(p.pos?'（'+p.pos+'）':''));
-  $('text').value='【'+st.inning+'回'+st.half+'】\n'+lines.join('\n')+'\n\n浜松南 '+st.score;
-  $('post').classList.remove('hide')
-};
-$('copy').onclick=async()=>{
-  try{await navigator.clipboard.writeText($('text').value)}
-  catch(e){$('text').select();document.execCommand('copy')}
-  toast('速報をコピーしました')
-};
-$('share').onclick=async()=>{
-  if(navigator.share)try{await navigator.share({text:$('text').value})}catch(e){}
-  else $('copy').click()
-};
-
-/* メンバー表OCR：写真右側の1〜9番の名前欄を行ごとに読む */
-$('ocrBtn').onclick=()=>$('memberPhoto').click();
-$('memberPhoto').onchange=e=>{
-  const f=e.target.files&&e.target.files[0];if(f)doOCRRows(f);e.target.value=''
-};
-
-async function loadImage(file){
-  return await new Promise((resolve,reject)=>{
-    const img=new Image();const r=new FileReader();
-    r.onload=()=>{img.onload=()=>resolve(img);img.onerror=reject;img.src=r.result};
-    r.onerror=reject;r.readAsDataURL(file)
-  })
-}
-function cropRow(img,i){
-  // このメンバー表の右側9行。比率指定なので写真サイズが変わっても対応。
-  const W=img.naturalWidth||img.width,H=img.naturalHeight||img.height;
-  const x1=Math.round(W*0.715),x2=Math.round(W*0.925);
-  // この写真では1〜9番の名前欄が右ページ上部の約30.3〜57.0%に収まる。
-  // 前版は下端が広すぎて、隣の行が次の行に混入していた。
-  const top=H*0.302,bottom=H*0.570;
-  const rh=(bottom-top)/9;
-  const y1=Math.round(top+i*rh+0.004*H),y2=Math.round(top+(i+1)*rh-0.004*H);
-  const c=document.createElement('canvas');
-  const scale=3;c.width=(x2-x1)*scale;c.height=(y2-y1)*scale;
-  const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);
-  g.imageSmoothingEnabled=true;g.drawImage(img,x1,y1,x2-x1,y2-y1,0,0,c.width,c.height);
-  // 軽いコントラスト補正
-  const d=g.getImageData(0,0,c.width,c.height),a=d.data;
-  for(let p=0;p<a.length;p+=4){let v=(a[p]*.299+a[p+1]*.587+a[p+2]*.114);v=(v-128)*1.35+128;v=Math.max(0,Math.min(255,v));a[p]=a[p+1]=a[p+2]=v}
-  g.putImageData(d,0,0);
-  return c.toDataURL('image/jpeg',0.9);
-}
-function cleanRowName(s){
-  s=String(s||'').replace(/[\r\n|｜]/g,' ').replace(/\s+/g,'').trim();
-  s=s.replace(/^[0-9０-９]{1,2}/,'').replace(/[0-9０-９]+$/,'').trim();
-  if(!s||/^[-ー―_=]+$/.test(s))return '';
-  if(/[0-9０-９]/.test(s))return '';
-  if(s.length<2||s.length>8)return '';
-  // OCRの表罫線・英数字の混入を除外
-  if(/[A-Za-z]/.test(s))return '';
-  return s;
-}
-async function ocrOne(data){
-  const fd=new FormData();fd.append('base64Image',data);fd.append('language','jpn');
-  fd.append('isOverlayRequired','false');fd.append('OCREngine','3');
-  const res=await fetch('https://api.ocr.space/parse/image',{method:'POST',headers:{apikey:'helloworld'},body:fd});
-  const j=await res.json();
-  if(j.IsErroredOnProcessing)throw new Error(j.ErrorMessage||'OCRエラー');
-  return (j.ParsedResults||[]).map(x=>x.ParsedText||'').join('\n');
-}
-async function doOCRRows(file){
-  $('ocrStatus').textContent='9人分の名前欄を個別に読み取っています…';$('ocrBtn').disabled=true;
-  try{
-    const img=await loadImage(file);const crops=Array.from({length:9},(_,i)=>cropRow(img,i));
-    const names=Array(9).fill('');
-    // 一度に投げすぎないよう3件ずつ
-    for(let b=0;b<9;b+=3){
-      const rs=await Promise.all(crops.slice(b,b+3).map(x=>ocrOne(x).catch(()=>'')));
-      rs.forEach((t,j)=>{names[b+j]=cleanRowName(t)})
-      $('ocrStatus').textContent=(Math.min(b+3,9))+'/9人分を読み取り中…';
-    }
-    let ok=0;
-    names.forEach((n,i)=>{if(n){st.members[i]=n;ok++}else if(!st.members[i])st.members[i]='選手名未登録'});
-    setup();save();
-    $('ocrStatus').textContent=ok+'/9人を読み取りました。空欄や誤りは下で修正できます。';
-    toast(ok+'/9人を読み取りました');
-  }catch(e){console.error(e);$('ocrStatus').textContent='読み取りに失敗しました。下の欄から手入力できます。';toast('読み取りに失敗しました')}
-  finally{$('ocrBtn').disabled=false}
-}
-
-$('set').onclick=()=>{$('setup').classList.toggle('hide');setup()};
-$('first').onclick=()=>{st.battingFirst=true;setup()};
-$('second').onclick=()=>{st.battingFirst=false;setup()};
-$('save').onclick=()=>{
-  document.querySelectorAll('#edit input').forEach(x=>st.members[+x.dataset.i]=x.value.trim()||'選手名未登録');
-  st.batter=0;save();$('setup').classList.add('hide');render();toast('スタメンを保存しました')
-};
-render();
-window.addEventListener('error',e=>{console.error(e);try{toast('アプリを再読み込みしてください')}catch(_){}});
+render();loadSaved();
 </script>
 </body>
 </html>
