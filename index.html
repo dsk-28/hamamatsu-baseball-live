@@ -14,7 +14,7 @@ header{position:sticky;top:0;z-index:10;background:var(--b);color:#fff;padding:1
 button{border:0;border-radius:11px;background:var(--l);color:#153e66;font-size:16px;font-weight:700;min-height:48px;padding:9px}button.primary{background:var(--b);color:#fff}button.green{background:var(--g);color:#fff}button.red{background:#fff0f0;color:var(--r)}
 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}.tab{display:flex;gap:7px}.tab button{flex:1}.sel{outline:3px solid #1c70b7}.hide{display:none}
 .note{background:var(--y);border-radius:10px;padding:10px;font-size:13px;line-height:1.55}.note strong{font-size:14px}input,textarea,select{font:inherit;width:100%;border:1px solid #d9e0e8;border-radius:10px;padding:11px;background:#fff}textarea{min-height:160px}.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:10px 16px;border-radius:22px;display:none;z-index:30;max-width:90%;text-align:center}
-.st{display:grid;grid-template-columns:42px 30px 1fr 42px;gap:6px;align-items:center;margin:7px 0;background:#f7f9fb;border-radius:12px;padding:7px;touch-action:auto}.st.dragging{opacity:.45;outline:3px dashed #1c70b7}.st .handle{font-size:22px;text-align:center;color:#52708e;user-select:none;touch-action:none}.st input{font-size:17px}.st select{font-size:17px;padding:11px}.move{display:flex;gap:3px}.move button{min-height:42px;padding:4px;font-size:16px}
+.st{display:grid;grid-template-columns:42px 1fr;gap:6px;align-items:center;margin:7px 0;background:#f7f9fb;border-radius:12px;padding:7px;touch-action:auto}.st.dragging{opacity:.45;outline:3px dashed #1c70b7}.st .handle{display:none}.st input{font-size:17px}.st select{font-size:17px;padding:11px}.move{display:none}
 .roster-row{display:grid;grid-template-columns:34px 1fr 42px;gap:6px;align-items:center;margin:5px 0}.roster-row b{color:#536273;text-align:center}.roster-row button{min-height:44px}.small{font-size:13px;color:#586575}.count{font-weight:800}.log{padding:9px 3px;border-bottom:1px solid #edf0f3}.warn{background:#fff1f1;border:1px solid #f0caca;border-radius:10px;padding:9px;font-size:13px;margin-top:8px}
 </style>
 </head>
@@ -36,7 +36,7 @@ button{border:0;border-radius:11px;background:var(--l);color:#153e66;font-size:1
 <div class="grid2" style="margin-top:7px"><button id="addRoster">＋1人追加</button><button id="clearRoster" class="red">名簿を全消去</button></div>
 </section>
 
-<div class="note"><b>👆 スタメンの並べ替え</b><br>選手を<strong>長押しして上下にドラッグ</strong>すると打順を入れ替えできます。うまく動かない場合は、右側の▲▼でも入れ替えできます。</div>
+<div class="note"><b>スタメン登録</b><br>打順は固定です。各打順のプルダウンから選手を選択してください。</div>
 <div id="edit" style="margin-top:9px"></div>
 <button id="save" class="green" style="width:100%;margin-top:7px">スタメンを保存して試合開始</button>
 </div></section>
@@ -46,9 +46,10 @@ button{border:0;border-radius:11px;background:var(--l);color:#153e66;font-size:1
 
 <section class="c"><div class="r b"><div><div class="s">現在の打者</div><div class="p" id="bat">1番　選手名未登録</div></div><div class="s" id="slot">打順 1番</div></div><div style="height:9px"></div><div class="grid" id="results"></div></section>
 <section class="c hide" id="pos"><div class="p">相手の守備位置</div><div class="s">必要なプレーだけ選択してください</div><div class="grid" id="positions" style="margin-top:8px"></div><button id="nop" style="width:100%;margin-top:8px">守備位置なしで確定</button></section>
-<section class="c"><div class="grid2"><button id="confirm" class="primary">この打席を確定</button><button id="nextbat">次の打者</button></div><div style="height:7px"></div><div class="grid2"><button id="sub">選手交代</button><button id="undo">↩ 1つ戻す</button></div></section>
+<section class="c"><div class="grid2"><button id="confirm" class="primary">この打席を確定</button><button id="nextbat">次の打者</button></div><div style="height:7px"></div><div class="grid2"><button id="pinch" class="primary">代打を選ぶ</button><button id="sub">選手交代</button></div><div style="height:7px"></div><button id="undo" style="width:100%">↩ 1つ戻す</button></section>
 <section class="c"><div class="r b"><div class="p">このイニング</div><button id="clear">イニング取消</button></div><div id="logs"></div></section>
 <section class="c"><div class="r b"><div class="p">速報</div><button id="make" class="green">速報を作成</button></div><div id="post" class="hide" style="margin-top:9px"><textarea id="text"></textarea><div class="grid2" style="margin-top:8px"><button id="copy">コピー</button><button id="share" class="green">共有</button></div></div></section>
+<section class="c hide" id="pinchcard"><div class="p">代打を選ぶ</div><div class="s">現在の打順の選手に代わって、名簿から選択します。</div><select id="pinchSelect" style="margin-top:8px"><option value="">代打を選択</option></select><button id="savePinch" class="green" style="width:100%;margin-top:8px">代打を確定</button></section>
 <section class="c hide" id="subcard"><div class="p">選手交代</div><div class="s">交代前 → 交代後</div><div class="grid2"><select id="out"><option value="">交代する選手</option></select><select id="into"><option value="">入る選手</option></select></div><button id="savesub" class="green" style="width:100%;margin-top:8px">交代を記録</button></section>
 </main><div class="toast" id="toast"></div>
 <script>
@@ -73,33 +74,51 @@ document.querySelectorAll('[data-del-roster]').forEach(x=>x.onclick=()=>{roster.
 function setup(){
 $('first').className=st.battingFirst?'primary':'';$('second').className=!st.battingFirst?'primary':'';
 let opts='<option value="">選手名を選択</option>'+roster.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');
-$('edit').innerHTML=st.members.map((n,i)=>`<div class="st" data-row="${i}"><b>${i+1}番</b><div class="handle" data-handle="${i}">☷</div><select data-i="${i}" aria-label="${i+1}番">${opts}</select><span class="move"><button type="button" data-up="${i}">▲</button><button type="button" data-down="${i}">▼</button></span></div>`).join('');
-document.querySelectorAll('[data-i]').forEach(s=>s.onchange=()=>{st.members[+s.dataset.i]=s.value;save();$('bat').textContent=(st.batter+1)+'番　'+(st.members[st.batter]||'選手名未登録');$('sum').innerHTML=`<b>${st.battingFirst?'先攻':'後攻'}</b>　スタメン ${st.members.filter(Boolean).length}/9人登録済み<br><span class="small">部員名簿 ${roster.length}/30人。名簿はこのiPhone内だけに保存されます。</span>`;toast('選手を登録しました');});
-document.querySelectorAll('[data-up]').forEach(b=>b.onclick=()=>moveMember(+b.dataset.up,-1));document.querySelectorAll('[data-down]').forEach(b=>b.onclick=()=>moveMember(+b.dataset.down,1));
+$('edit').innerHTML=st.members.map((n,i)=>`<div class="st"><b>${i+1}番</b><select data-i="${i}" aria-label="${i+1}番">${opts}</select></div>`).join('');
+document.querySelectorAll('[data-i]').forEach(s=>s.onchange=()=>{st.members[+s.dataset.i]=s.value;save();updateDisplay();toast('選手を登録しました');});
 $('sum').innerHTML=`<b>${st.battingFirst?'先攻':'後攻'}</b>　スタメン ${st.members.filter(Boolean).length}/9人登録済み<br><span class="small">部員名簿 ${roster.length}/30人。名簿はこのiPhone内だけに保存されます。</span>`;
 updateSubSelects();
-setupTouchDrag();
 }
-function moveMember(i,d){let j=i+d;if(j<0||j>8)return;moveMemberTo(i,j)}
-function moveMemberTo(from,to){let a=st.members.slice(),x=a.splice(from,1)[0];a.splice(to,0,x);st.members=a;save();setup();toast('打順を入れ替えました')}
-function setupTouchDrag(){
-let rows=[...document.querySelectorAll('.st')], dragging=null, startY=0, lastTarget=null;
-rows.forEach(row=>{let handle=row.querySelector('[data-handle]');handle.onpointerdown=e=>{e.preventDefault();dragging=row;startY=e.clientY;row.classList.add('dragging');handle.setPointerCapture(e.pointerId)};handle.onpointermove=e=>{if(!dragging)return;let y=e.clientY;let target=rows.find(r=>{let q=r.getBoundingClientRect();return y>=q.top&&y<=q.bottom});if(target&&target!==dragging){lastTarget=target;let from=+dragging.dataset.row,to=+target.dataset.row;if(Math.abs(y-startY)>12){moveMemberTo(from,to);dragging=null;}}};handle.onpointerup=()=>{if(dragging)dragging.classList.remove('dragging');dragging=null;lastTarget=null};handle.onpointercancel=()=>{if(dragging)dragging.classList.remove('dragging');dragging=null};});
+function updateSubSelects(){if(!$('out'))return;$('pinchSelect').innerHTML='<option value="">代打を選択</option>'+roster.filter(x=>!st.members.includes(x)).map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');$('out').innerHTML='<option value="">交代する選手</option>'+st.members.filter(Boolean).map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');$('into').innerHTML='<option value="">入る選手</option>'+roster.filter(x=>!st.members.includes(x)).map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('')}
+function ownHalf(){return st.battingFirst?'表':'裏'}
+function isOwnAttack(){return st.half===ownHalf()}
+function updateDisplay(){
+ const own=isOwnAttack();
+ if(own){
+  $('bat').textContent=(st.batter+1)+'番　'+(st.members[st.batter]||'選手名未登録');
+  $('slot').textContent='打順 '+(st.batter+1)+'番';
+ }else{
+  $('bat').textContent='相手チームの攻撃';
+  $('slot').textContent='守備中';
+ }
+ $('score').textContent=st.score;
+ $('inn').textContent=st.inning+'回'+st.half;
+ $('now').textContent=st.inning+'回'+st.half;
+ $('sub').style.display=own?'':'none';
+ $('pinch').style.display=own?'':'none';
 }
-function updateSubSelects(){if(!$('out'))return;$('out').innerHTML='<option value="">交代する選手</option>'+st.members.filter(Boolean).map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');$('into').innerHTML='<option value="">入る選手</option>'+roster.filter(x=>!st.members.includes(x)).map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('')}
 function render(){
-$('inn').textContent=st.inning+'回'+st.half;$('now').textContent=st.inning+'回'+st.half;$('score').textContent=st.score;$('bat').textContent=(st.batter+1)+'番　'+(st.members[st.batter]||'選手名未登録');$('slot').textContent='打順 '+(st.batter+1)+'番';
-let a=st.plays.filter(p=>p.inning===st.inning&&p.half===st.half);$('logs').innerHTML=a.length?a.map(p=>`<div class="log">${p.type==='交代'?'選手交代：'+esc(p.out)+' → '+esc(p.in):esc(p.name)+'：<b>'+esc(p.result)+'</b>'+(p.pos?'（'+esc(p.pos)+'）':'')}</div>`).join(''):'<div class="s">まだ入力されていません</div>';
+updateDisplay();
+let a=st.plays.filter(p=>p.inning===st.inning&&p.half===st.half);$('logs').innerHTML=a.length?a.map(p=>`<div class="log">${p.type==='交代'?'選手交代：'+esc(p.out)+' → '+esc(p.in):(p.type==='守備'?'相手攻撃：<b>'+esc(p.result)+'</b>'+(p.pos?'（'+esc(p.pos)+'）':''):esc(p.name)+'：<b>'+esc(p.result)+'</b>'+(p.pos?'（'+esc(p.pos)+'）':''))}</div>`).join(''):'<div class="s">まだ入力されていません</div>';
 setup();save();
 }
-function finish(){if(!st.pending)return;let n=st.members[st.batter]||'選手名未登録';st.plays.push({type:'打席',inning:st.inning,half:st.half,name:n,result:st.pending.result,pos:st.pending.pos});if(st.pending.result==='本塁打')st.score++;st.pending=null;$('pos').classList.add('hide');document.querySelectorAll('.result').forEach(x=>x.classList.remove('sel'));st.batter=(st.batter+1)%9;render();toast('記録して次の打者へ')}
+function finish(){
+ if(!st.pending)return;
+ const own=isOwnAttack();
+ const n=own?(st.members[st.batter]||'選手名未登録'):'相手打者';
+ st.plays.push({type:own?'打席':'守備',inning:st.inning,half:st.half,name:n,result:st.pending.result,pos:st.pending.pos});
+ if(own&&st.pending.result==='本塁打')st.score++;
+ st.pending=null;$('pos').classList.add('hide');document.querySelectorAll('.result').forEach(x=>x.classList.remove('sel'));
+ if(own)st.batter=(st.batter+1)%9;
+ render();toast(own?'記録して次の打者へ':'守備記録を入力しました');
+}
 $('results').innerHTML=R.map(x=>`<button class="result">${x}</button>`).join('');document.querySelectorAll('.result').forEach(b=>b.onclick=()=>{let r=b.textContent;st.pending={result:r,pos:''};document.querySelectorAll('.result').forEach(x=>x.classList.toggle('sel',x.textContent===r));if(['ヒット','2塁打','3塁打','本塁打','犠打','犠飛','ゴロ','フライ'].includes(r)){$('pos').classList.remove('hide');toast('守備位置を選択してください')}else finish()});
-$('positions').innerHTML=P.map(x=>`<button>${x}</button>`).join('');document.querySelectorAll('#positions button').forEach(b=>b.onclick=()=>{if(st.pending){st.pending.pos=b.textContent;finish()}});$('nop').onclick=finish;$('confirm').onclick=()=>st.pending?finish():toast('結果を選択してください');$('nextbat').onclick=()=>{st.batter=(st.batter+1)%9;render()};
+$('positions').innerHTML=P.map(x=>`<button>${x}</button>`).join('');document.querySelectorAll('#positions button').forEach(b=>b.onclick=()=>{if(st.pending){st.pending.pos=b.textContent;finish()}});$('nop').onclick=finish;$('confirm').onclick=()=>st.pending?finish():toast('結果を選択してください');$('nextbat').onclick=()=>{if(isOwnAttack())st.batter=(st.batter+1)%9;render()};
 function half(d){if(d>0){if(st.half==='表')st.half='裏';else{st.half='表';st.inning++}}else{if(st.half==='裏')st.half='表';else if(st.inning>1){st.inning--;st.half='裏'}}st.batter=0;st.pending=null;$('pos').classList.add('hide');render()}
 $('next').onclick=()=>half(1);$('prev').onclick=()=>half(-1);
-$('undo').onclick=()=>{if(!st.plays.length)return toast('戻せる入力がありません');let p=st.plays.pop();if(p.result==='本塁打')st.score--;if(p.type==='打席')st.batter=(st.batter+8)%9;render()};
+$('undo').onclick=()=>{if(!st.plays.length)return toast('戻せる入力がありません');let p=st.plays.pop();if(p.type==='打席'&&p.result==='本塁打')st.score--;if(p.type==='打席')st.batter=(st.batter+8)%9;render()};
 $('clear').onclick=()=>{st.plays=st.plays.filter(p=>!(p.inning===st.inning&&p.half===st.half));st.batter=0;render()};
-$('sub').onclick=()=>$('subcard').classList.toggle('hide');$('savesub').onclick=()=>{let o=$('out').value,i=$('into').value;if(!o||!i)return toast('交代前・交代後を入力してください');let idx=st.members.indexOf(o);if(idx>=0)st.members[idx]=i;st.plays.push({type:'交代',inning:st.inning,half:st.half,out:o,in:i});$('out').value='';$('into').value='';render();toast('選手交代を記録しました')};
+$('pinch').onclick=()=>{if(!isOwnAttack())return;$('pinchcard').classList.toggle('hide');updateSubSelects()};$('savePinch').onclick=()=>{let i=$('pinchSelect').value;if(!i)return toast('代打選手を選択してください');let old=st.members[st.batter]||'選手名未登録';st.members[st.batter]=i;st.plays.push({type:'交代',inning:st.inning,half:st.half,out:old,in:i});$('pinchSelect').value='';$('pinchcard').classList.add('hide');save();render();toast(i+'を代打に登録しました')};$('sub').onclick=()=>$('subcard').classList.toggle('hide');$('savesub').onclick=()=>{let o=$('out').value,i=$('into').value;if(!o||!i)return toast('交代前・交代後を入力してください');let idx=st.members.indexOf(o);if(idx>=0)st.members[idx]=i;st.plays.push({type:'交代',inning:st.inning,half:st.half,out:o,in:i});$('out').value='';$('into').value='';render();toast('選手交代を記録しました')};
 $('make').onclick=()=>{let a=st.plays.filter(p=>p.inning===st.inning&&p.half===st.half);let lines=a.map(p=>p.type==='交代'?`選手交代：${p.out} → ${p.in}`:`${p.name}：${p.result}${p.pos?'（'+p.pos+'）':''}`);$('text').value=`【${st.inning}回${st.half}】\n${lines.join('\n')}\n\n浜松南 ${st.score}`;$('post').classList.remove('hide')};
 $('copy').onclick=async()=>{try{await navigator.clipboard.writeText($('text').value);toast('コピーしました')}catch(e){$('text').select();document.execCommand('copy');toast('コピーしました')}};
 $('share').onclick=async()=>{if(navigator.share){try{await navigator.share({text:$('text').value})}catch(e){}}else toast('共有機能に対応していません')};
