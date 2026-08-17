@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<title>浜松南 野球速報</title>
+<title>浜松南 野球速報 v10</title>
 <style>
 :root{--b:#124c87;--l:#e9eef4;--g:#16844a;--y:#fff8df;--r:#b42318}
 *{box-sizing:border-box}body{margin:0;background:#f3f5f7;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif;color:#111}
@@ -58,6 +58,8 @@ const R=['ヒット','2塁打','3塁打','本塁打','四球','死球','犠打',
 const P=['投手','捕手','一塁','二塁','三塁','遊撃','左翼','中堅','右翼'];
 let roster=loadRoster();
 let st=JSON.parse(localStorage.getItem(K)||'null')||{inning:1,half:'表',score:0,batter:0,members:Array(9).fill(''),battingFirst:true,plays:[],pending:null};
+// 設定変更時に古い試合状態を残さない
+function resetGameHalf(){st.inning=1;st.half='表';st.batter=0;st.pending=null;st.plays=[];st.score=0;save();}
 if(!Array.isArray(st.members)||st.members.length!==9)st.members=Array(9).fill('');
 const $=id=>document.getElementById(id), save=()=>localStorage.setItem(K,JSON.stringify(st));
 function loadRoster(){try{let a=JSON.parse(localStorage.getItem(ROSTER_KEY)||'[]');return Array.isArray(a)?a.filter(Boolean).slice(0,30):[]}catch(e){return []}}
@@ -123,7 +125,7 @@ $('make').onclick=()=>{let a=st.plays.filter(p=>p.inning===st.inning&&p.half===s
 $('copy').onclick=async()=>{try{await navigator.clipboard.writeText($('text').value);toast('コピーしました')}catch(e){$('text').select();document.execCommand('copy');toast('コピーしました')}};
 $('share').onclick=async()=>{if(navigator.share){try{await navigator.share({text:$('text').value})}catch(e){}}else toast('共有機能に対応していません')};
 $('set').onclick=()=>{$('setup').classList.toggle('hide');if(!$('setup').classList.contains('hide')){renderRoster();setup()}};
-$('first').onclick=()=>{st.battingFirst=true;save();setup()};$('second').onclick=()=>{st.battingFirst=false;save();setup()};
+$('first').onclick=()=>{st.battingFirst=true;resetGameHalf();setup();render()};$('second').onclick=()=>{st.battingFirst=false;resetGameHalf();setup();render()};
 $('save').onclick=()=>{let used=st.members.filter(Boolean);if(used.length<9)return toast('9人を選択してください');let dup=used.length!==new Set(used).size;if(dup)return toast('同じ選手が重複しています');save();$('setup').classList.add('hide');render();toast('スタメンを保存しました')};
 $('addRoster').onclick=()=>{if(roster.length>=30)return toast('名簿は30人までです');roster.push('');renderRoster();let inputs=document.querySelectorAll('[data-roster]');inputs[inputs.length-1]?.focus()};
 $('bulkSave').onclick=()=>{let raw=$('bulk').value.split(/\n|、|,/).map(x=>x.trim()).filter(Boolean);if(!raw.length)return toast('名前を入力してください');roster=[...roster,...raw].slice(0,30);roster=[...new Set(roster.filter(Boolean))];saveRoster();$('bulk').value=''};
