@@ -5,32 +5,33 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>浜松南 野球速報</title>
 <style>
-:root{--bg:#f5f7fa;--card:#fff;--text:#17202a;--muted:#667085;--line:#dfe3e8;--accent:#1677ff;--danger:#e5484d;--ok:#16803c}
+:root{--bg:#f5f7fa;--card:#fff;--text:#17202a;--muted:#667085;--line:#dfe3e8;--accent:#1677ff;--danger:#e5484d}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif}
-.app{max-width:720px;margin:auto;padding-bottom:48px}.top{position:sticky;top:0;z-index:20;background:rgba(245,247,250,.96);backdrop-filter:blur(12px);padding:10px 12px 8px;border-bottom:1px solid var(--line)}
+.app{max-width:760px;margin:auto;padding-bottom:48px}
+.top{position:sticky;top:0;z-index:20;background:rgba(245,247,250,.96);backdrop-filter:blur(12px);padding:10px 12px 8px;border-bottom:1px solid var(--line)}
 .score-title{font-weight:800;font-size:13px;color:var(--muted);margin-bottom:5px}
 .score-wrap{overflow-x:auto;border:1px solid #cfd5dc;border-radius:12px;background:#fff}
-.score{border-collapse:collapse;min-width:640px;width:100%;font-size:13px;text-align:center}
-.score th,.score td{border-right:1px solid var(--line);padding:5px 6px;white-space:nowrap}
-.score th:first-child,.score td:first-child{text-align:left;position:sticky;left:0;background:#fff;font-weight:800;min-width:92px}
+.score{border-collapse:collapse;min-width:760px;width:100%;font-size:13px;text-align:center}
+.score th,.score td{border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:5px 6px;white-space:nowrap}
+.score th:first-child,.score td:first-child{text-align:left;position:sticky;left:0;background:#fff;font-weight:800;min-width:92px;z-index:1}
 .score .total{font-weight:900;font-size:15px}
 main{padding:12px}.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
 h1{font-size:20px;margin:2px 0 12px}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 label{font-size:13px;color:var(--muted);font-weight:700;display:block;margin-bottom:5px}
 input,select,textarea{font:inherit;border:1px solid #cfd5dc;border-radius:10px;padding:10px;background:#fff;width:100%}
-.field{flex:1;min-width:130px}.pill{display:inline-flex;padding:7px 11px;border-radius:999px;background:#eef4ff;color:#1459b8;font-weight:800;font-size:13px}
-.inning-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.inning-grid button{padding:12px}
 button{border:0;border-radius:11px;padding:11px 13px;background:#eef1f5;color:#17202a;font-weight:800;font-size:15px;cursor:pointer}
 button.primary{background:var(--accent);color:#fff}button.selected{background:#17202a;color:#fff}button.danger{background:#fff0f0;color:var(--danger)}
-button.small{font-size:13px;padding:8px 10px}
+button.small{font-size:13px;padding:8px 10px}.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .result-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.result-grid button{min-height:48px}
 .position-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}.position-grid button{padding:10px 4px}
 .plusrow{display:flex;align-items:center;justify-content:center;gap:14px;margin:8px 0}
-.plusrow button{width:48px;height:44px;padding:0;font-size:25px;border-radius:12px}.runs{font-size:28px;font-weight:900;min-width:35px;text-align:center}
+.plusrow button{width:52px;height:46px;padding:0;font-size:27px;border-radius:12px}.runs{font-size:28px;font-weight:900;min-width:35px;text-align:center}
+.pill{display:inline-flex;padding:7px 11px;border-radius:999px;background:#eef4ff;color:#1459b8;font-weight:800;font-size:13px}
+.notice{font-size:12px;color:var(--muted);line-height:1.5}.history{border-top:1px solid var(--line);margin-top:10px;padding-top:10px}
+.entry{padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
 .preview{white-space:pre-wrap;background:#101214;color:#f5f5f5;border-radius:12px;padding:14px;font-family:ui-monospace,SFMono-Regular,monospace;font-size:13px;line-height:1.65;overflow:auto}
-.history{border-top:1px solid var(--line);margin-top:10px;padding-top:10px}.entry{padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
-.hidden{display:none!important}.notice{font-size:12px;color:var(--muted);line-height:1.5}.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-@media(max-width:430px){.result-grid{grid-template-columns:repeat(2,1fr)}.position-grid{grid-template-columns:repeat(4,1fr)}.two{grid-template-columns:1fr}}
+.hidden{display:none!important}
+@media(max-width:430px){.result-grid{grid-template-columns:repeat(2,1fr)}.position-grid{grid-template-columns:repeat(4,1fr)}.two{grid-template-columns:1fr}.score{min-width:760px}}
 </style>
 </head>
 <body>
@@ -45,14 +46,14 @@ button.small{font-size:13px;padding:8px 10px}
   <h1>浜松南 野球速報</h1>
   <div class="two">
     <div><label>相手校</label><input id="opponent" placeholder="相手校名"></div>
-    <div><label>浜松南の攻撃</label><select id="half">
-      <option value="top">表（浜松南が先攻）</option>
-      <option value="bottom">裏（浜松南が後攻）</option>
+    <div><label>先攻・後攻</label><select id="half">
+      <option value="top">浜松南が先攻</option>
+      <option value="bottom">浜松南が後攻</option>
     </select></div>
   </div>
   <div style="margin-top:8px" class="two">
     <div><label>現在のイニング</label><select id="inning"></select></div>
-    <div><label>攻撃側</label><div id="sideLabel" class="pill"></div></div>
+    <div><label>現在の攻撃</label><div id="sideLabel" class="pill"></div></div>
   </div>
 </section>
 
@@ -64,27 +65,35 @@ button.small{font-size:13px;padding:8px 10px}
     <button class="small" id="nextBatter">次 ›</button>
   </div>
   <div id="lineupButtons" class="result-grid"></div>
-  <div class="notice" style="margin-top:8px">打者を変更すると、守備位置の選択は自動でリセットされます。</div>
+  <div id="opponentNotice" class="notice hidden">相手の攻撃中です。選手名は入力せず、打席結果だけ記録します。</div>
 </section>
 
 <section class="card">
   <label>打席結果</label>
   <div id="results" class="result-grid"></div>
+
   <div style="margin-top:10px">
-    <label>守備位置（打球結果に必要な場合のみ）</label>
+    <label>守備位置（必要なときだけ選択）</label>
     <div id="positions" class="position-grid"></div>
   </div>
+
   <div style="margin-top:10px">
     <label>得点</label>
     <div class="plusrow">
-      <button id="minusRun">−</button><div class="runs" id="runCount">0</div><button class="primary" id="plusRun">＋</button>
+      <button id="minusRun">−</button>
+      <div class="runs" id="runCount">0</div>
+      <button class="primary" id="plusRun">＋</button>
     </div>
   </div>
+
   <div class="two">
     <button id="steal">盗塁を記録</button>
     <button id="advance">進塁・暴投等を記録</button>
   </div>
-  <div style="margin-top:10px"><textarea id="comment" rows="2" placeholder="自由コメント（例：暴投の間に本塁生還、二盗、悪送球など）"></textarea></div>
+
+  <div style="margin-top:10px">
+    <textarea id="comment" rows="2" placeholder="自由コメント（例：暴投の間に本塁生還、二盗、悪送球など）"></textarea>
+  </div>
   <button class="primary" style="width:100%;margin-top:10px" id="saveAtBat">この打席を記録</button>
 </section>
 
@@ -106,127 +115,218 @@ button.small{font-size:13px;padding:8px 10px}
 </div>
 
 <script>
-const lineup = [
+const lineup=[
   "齊藤","鈴木","山本","本間","宮崎","篠原","馬渡","中川","永井",
   "太田","伊藤","西岡"
 ];
-const results = [
+
+const results=[
  "左飛","中飛","右飛","一飛","二飛","三飛","遊飛","捕飛",
  "投ゴロ","一ゴロ","二ゴロ","三ゴロ","遊ゴロ","捕ゴロ",
  "見三振","空三振","四球","死球","左安打","中安打","右安打",
  "二塁打","三塁打","本塁打","犠打","犠飛","失策"
 ];
-const positions = ["投","捕","一","二","三","遊","左","中","右"];
-let state = {
- opponent:"相手校", half:"top", inning:1, batter:0, result:"", position:"",
- runs:0, comment:"", records:[], scores:{home:Array(9).fill(0),away:Array(9).fill(0)}
-};
-const $=id=>document.getElementById(id);
-for(let i=1;i<=15;i++) $("inning").insertAdjacentHTML("beforeend",`<option value="${i}">${i}回</option>`);
 
-function offensiveTeam(){ return state.half==="top" ? "浜松南" : state.opponent; }
-function defensiveTeam(){ return state.half==="top" ? state.opponent : "浜松南"; }
-function teamRow(isHamamatsu){ return (state.half==="top" ? isHamamatsu : !isHamamatsu) ? "浜松南":"相手校"; }
+const positions=["投","捕","一","二","三","遊","左","中","右"];
+const INNINGS=15;
+const defaultState={
+ opponent:"相手校",half:"top",inning:1,batter:0,result:"",position:"",
+ runs:0,comment:"",records:[],
+ scores:{ham:Array(INNINGS).fill(0),opp:Array(INNINGS).fill(0)}
+};
+
+let state=loadState();
+const $=id=>document.getElementById(id);
+
+for(let i=1;i<=INNINGS;i++)$("inning").insertAdjacentHTML("beforeend",`<option value="${i}">${i}回</option>`);
+
+function loadState(){
+ try{
+   const saved=JSON.parse(localStorage.getItem("hamamatsuBaseballLive"));
+   if(saved){
+     const s=Object.assign({},defaultState,saved);
+     s.scores=s.scores||{ham:Array(INNINGS).fill(0),opp:Array(INNINGS).fill(0)};
+     s.scores.ham=Array.from({length:INNINGS},(_,i)=>(s.scores.ham||[])[i]||0);
+     s.scores.opp=Array.from({length:INNINGS},(_,i)=>(s.scores.opp||[])[i]||0);
+     s.records=s.records||[];
+     return s;
+   }
+ }catch(e){}
+ return JSON.parse(JSON.stringify(defaultState));
+}
+function persist(){localStorage.setItem("hamamatsuBaseballLive",JSON.stringify(state));}
+function offensiveTeam(){return state.half==="top"?"浜松南":state.opponent;}
+function resetAtBat(){state.result="";state.position="";state.runs=0;state.comment="";}
 
 function renderScore(){
- let header="<tr><th></th>"+Array.from({length:9},(_,i)=>`<th>${i+1}</th>`).join("")+"<th>計</th></tr>";
- let ham=state.scores.home, opp=state.scores.away;
- // home = 浜松南, away = opponent; displayed order follows batting order
- const hamTotal=ham.reduce((a,b)=>a+b,0), oppTotal=opp.reduce((a,b)=>a+b,0);
- let hamCells=ham.map(x=>`<td>${x}</td>`).join(""), oppCells=opp.map(x=>`<td>${x}</td>`).join("");
- let h=`<tr><td>${state.half==="top"?"浜松南":state.opponent}</td>${state.half==="top"?hamCells:oppCells}<td class="total">${state.half==="top"?hamTotal:oppTotal}</td></tr>`;
- let a=`<tr><td>${state.half==="top"?state.opponent:"浜松南"}</td>${state.half==="top"?oppCells:hamCells}<td class="total">${state.half==="top"?oppTotal:hamTotal}</td></tr>`;
- $("scoreTable").innerHTML=header+h+a;
+  const hamTotal=state.scores.ham.reduce((a,b)=>a+b,0);
+  const oppTotal=state.scores.opp.reduce((a,b)=>a+b,0);
+  const header="<tr><th></th>"+Array.from({length:INNINGS},(_,i)=>`<th>${i+1}</th>`).join("")+"<th>計</th></tr>";
+  const firstIsHam=state.half==="top";
+  const firstName=firstIsHam?"浜松南":state.opponent;
+  const secondName=firstIsHam?state.opponent:"浜松南";
+  const first=firstIsHam?state.scores.ham:state.scores.opp;
+  const second=firstIsHam?state.scores.opp:state.scores.ham;
+  const cells=a=>a.map(x=>`<td>${x}</td>`).join("");
+  $("scoreTable").innerHTML=header+
+    `<tr><td>${firstName}</td>${cells(first)}<td class="total">${firstIsHam?hamTotal:oppTotal}</td></tr>`+
+    `<tr><td>${secondName}</td>${cells(second)}<td class="total">${firstIsHam?oppTotal:hamTotal}</td></tr>`;
 }
-function renderLineup(){
- const attack=offensiveTeam();
- $("batterName").textContent=attack==="浜松南" ? lineup[state.batter] : "相手打者";
- // User requested no "相手打者": for opponent offense, don't show a batter name.
- if(attack!=="浜松南"){ $("batterName").textContent="打席結果"; $("lineupButtons").classList.add("hidden"); }
- else {
-   $("lineupButtons").classList.remove("hidden");
-   $("lineupButtons").innerHTML=lineup.map((n,i)=>`<button class="${i===state.batter?'selected':''}" data-i="${i}">${i+1}. ${n}</button>`).join("");
-   document.querySelectorAll("#lineupButtons button").forEach(b=>b.onclick=()=>{state.batter=+b.dataset.i;resetAtBat();renderAll()});
- }
- $("sideLabel").textContent=`${state.inning}回${state.half==="top"?"表":"裏"}：${attack}`;
-}
-function renderResults(){
- $("results").innerHTML=results.map(r=>`<button class="${state.result===r?'selected':''}" data-r="${r}">${r}</button>`).join("");
- document.querySelectorAll("#results button").forEach(b=>b.onclick=()=>{state.result=b.dataset.r;renderResults()});
- $("positions").innerHTML=positions.map(p=>`<button class="${state.position===p?'selected':''}" data-p="${p}">${p}</button>`).join("");
- document.querySelectorAll("#positions button").forEach(b=>b.onclick=()=>{state.position=b.dataset.p;renderResults()});
- $("runCount").textContent=state.runs;
- $("comment").value=state.comment;
-}
-function renderCurrent(){
- const arr=state.records.filter(r=>r.inning===state.inning && r.half===state.half);
- $("currentInning").innerHTML=arr.length?arr.map(r=>`<div class="entry">${r.text}</div>`).join(""):"まだ記録はありません。";
-}
-function renderPreview(){
- let lines=[];
- const opp=state.opponent||"相手校";
- lines.push(`【試合速報】浜松南 vs ${opp}`);
- lines.push(`【現在のスコア】浜松南 ${state.scores.home.reduce((a,b)=>a+b,0)} - ${opp} ${state.scores.away.reduce((a,b)=>a+b,0)}`);
- for(let inn=1;inn<=15;inn++){
-   const t=state.records.filter(r=>r.inning===inn&&r.half==="top");
-   const b=state.records.filter(r=>r.inning===inn&&r.half==="bottom");
-   if(!t.length&&!b.length) continue;
-   lines.push(`\n【${inn}回表】`);
-   t.forEach(r=>lines.push(r.text));
-   lines.push(`【${inn}回裏】`);
-   b.forEach(r=>lines.push(r.text));
- }
- $("preview").textContent=lines.join("\n");
-}
-function resetAtBat(){state.result="";state.position="";state.runs=0;state.comment="";}
-function renderAll(){renderScore();renderLineup();renderResults();renderCurrent();renderPreview();}
-function recordText(){
- let text="";
- if(offensiveTeam()==="浜松南") text+=`${lineup[state.batter]}　`;
- text+=state.result||"結果未選択";
- if(state.position && /飛|ゴロ|安打|失策|犠/.test(state.result||"")) text=`${text}（${state.position}）`;
- if(state.runs>0) text+=`　${state.runs}点`;
- if(state.comment.trim()) text+=`　${state.comment.trim()}`;
- return text;
-}
-$("saveAtBat").onclick=()=>{
- if(!state.result){alert("打席結果を選択してください。");return;}
- const rec={inning:state.inning,half:state.half,text:recordText(),runs:state.runs};
- state.records.push(rec);
- const idx=state.inning-1;
- if(idx>=0){
-   if(offensiveTeam()==="浜松南") state.scores.home[idx]+=state.runs;
-   else state.scores.away[idx]+=state.runs;
- }
- resetAtBat();
- if(offensiveTeam()==="浜松南") state.batter=(state.batter+1)%lineup.length;
- renderAll();
-};
-$("plusRun").onclick=()=>{state.runs++;renderResults()};
-$("minusRun").onclick=()=>{state.runs=Math.max(0,state.runs-1);renderResults()};
-$("prevBatter").onclick=()=>{if(offensiveTeam()==="浜松南"){state.batter=(state.batter-1+lineup.length)%lineup.length;resetAtBat();renderAll()}};
-$("nextBatter").onclick=()=>{if(offensiveTeam()==="浜松南"){state.batter=(state.batter+1)%lineup.length;resetAtBat();renderAll()}};
-$("half").onchange=e=>{state.half=e.target.value;resetAtBat();renderAll()};
-$("inning").onchange=e=>{state.inning=+e.target.value;resetAtBat();renderAll()};
-$("opponent").oninput=e=>{state.opponent=e.target.value||"相手校";renderScore();renderLineup();renderPreview()};
-$("comment").oninput=e=>state.comment=e.target.value;
-$("steal").onclick=()=>{$("comment").value=($("comment").value?$("comment").value+"　":"")+"→盗塁";state.comment=$("comment").value};
-$("advance").onclick=()=>{$("comment").value=($("comment").value?$("comment").value+"　":"")+"→進塁（暴投・悪送球等）";state.comment=$("comment").value};
-$("nextHalf").onclick=()=>{
- if(state.half==="top"){state.half="bottom"}else{state.half="top";state.inning++}
- resetAtBat();$("half").value=state.half;$("inning").value=state.inning;renderAll();window.scrollTo({top:0,behavior:"smooth"});
-};
-$("clearCurrent").onclick=()=>{
- if(!confirm("現在の回の記録をすべて削除して修正しますか？"))return;
- const targetIn=state.inning,targetHalf=state.half;
- state.records=state.records.filter(r=>!(r.inning===targetIn&&r.half===targetHalf));
- state.scores.home[targetIn-1]=state.records.filter(r=>r.inning===targetIn&&r.half==="top").reduce((s,r)=>s+r.runs,0);
- state.scores.away[targetIn-1]=state.records.filter(r=>r.inning===targetIn&&r.half==="bottom").reduce((s,r)=>s+r.runs,0);
- resetAtBat();renderAll();
-};
-$("copy").onclick=async()=>{try{await navigator.clipboard.writeText($("preview").textContent);alert("速報をコピーしました。LINEに貼り付けできます。")}catch(e){alert("コピーできませんでした。速報欄を長押ししてコピーしてください。")}};
 
-$("opponent").value=state.opponent;$("half").value=state.half;$("inning").value=state.inning;
+function renderLineup(){
+  const isHam=offensiveTeam()==="浜松南";
+  $("batterName").textContent=isHam?lineup[state.batter]:"打席結果";
+  $("lineupButtons").classList.toggle("hidden",!isHam);
+  $("opponentNotice").classList.toggle("hidden",isHam);
+  if(isHam){
+    $("lineupButtons").innerHTML=lineup.map((n,i)=>
+      `<button class="${i===state.batter?"selected":""}" data-i="${i}">${i+1}. ${n}</button>`).join("");
+    document.querySelectorAll("#lineupButtons button").forEach(b=>b.onclick=()=>{
+      state.batter=Number(b.dataset.i);resetAtBat();renderAll();
+    });
+  }else $("lineupButtons").innerHTML="";
+  $("sideLabel").textContent=`${state.inning}回${state.half==="top"?"表":"裏"}：${offensiveTeam()}`;
+}
+
+function renderResults(){
+  $("results").innerHTML=results.map(r=>
+    `<button class="${state.result===r?"selected":""}" data-r="${r}">${r}</button>`).join("");
+  document.querySelectorAll("#results button").forEach(b=>b.onclick=()=>{
+    state.result=b.dataset.r;renderResults();
+  });
+
+  $("positions").innerHTML=positions.map(p=>
+    `<button class="${state.position===p?"selected":""}" data-p="${p}">${p}</button>`).join("");
+  document.querySelectorAll("#positions button").forEach(b=>b.onclick=()=>{
+    state.position=b.dataset.p;renderResults();
+  });
+
+  $("runCount").textContent=state.runs;
+  $("comment").value=state.comment;
+}
+
+function renderCurrent(){
+  const arr=state.records.filter(r=>r.inning===state.inning&&r.half===state.half);
+  $("currentInning").innerHTML=arr.length
+    ?arr.map(r=>`<div class="entry">${r.text}</div>`).join("")
+    :"まだ記録はありません。";
+}
+
+function renderPreview(){
+  const opp=state.opponent||"相手校";
+  const hamTotal=state.scores.ham.reduce((a,b)=>a+b,0);
+  const oppTotal=state.scores.opp.reduce((a,b)=>a+b,0);
+  let lines=[
+    "【試合速報】浜松南 vs "+opp,
+    "【現在のスコア】浜松南 "+hamTotal+" - "+opp+" "+oppTotal
+  ];
+  for(let inn=1;inn<=INNINGS;inn++){
+    const top=state.records.filter(r=>r.inning===inn&&r.half==="top");
+    const bottom=state.records.filter(r=>r.inning===inn&&r.half==="bottom");
+    if(!top.length&&!bottom.length)continue;
+    if(top.length){lines.push("");lines.push(`【${inn}回表】`);top.forEach(r=>lines.push(r.text));}
+    if(bottom.length){lines.push("");lines.push(`【${inn}回裏】`);bottom.forEach(r=>lines.push(r.text));}
+  }
+  $("preview").textContent=lines.join("\n");
+}
+
+function recordText(){
+  let text="";
+  if(offensiveTeam()==="浜松南")text+=`${lineup[state.batter]}　`;
+  text+=state.result||"結果未選択";
+  if(state.position&&/飛|ゴロ|安打|失策|犠/.test(state.result||""))
+    text+=`（${state.position}）`;
+  if(state.runs>0)text+=`　${state.runs}点`;
+  if(state.comment.trim())text+=`　${state.comment.trim()}`;
+  return text;
+}
+
+function renderAll(){
+  renderScore();renderLineup();renderResults();renderCurrent();renderPreview();persist();
+}
+
+$("saveAtBat").onclick=()=>{
+  if(!state.result){alert("打席結果を選択してください。");return;}
+  const isHam=offensiveTeam()==="浜松南";
+  const idx=state.inning-1;
+  const rec={
+    inning:state.inning,half:state.half,
+    text:recordText(),runs:state.runs
+  };
+  state.records.push(rec);
+  if(isHam)state.scores.ham[idx]+=state.runs;
+  else state.scores.opp[idx]+=state.runs;
+  resetAtBat();
+  if(isHam)state.batter=(state.batter+1)%lineup.length;
+  renderAll();
+};
+
+$("plusRun").onclick=()=>{state.runs++;renderResults();persist();};
+$("minusRun").onclick=()=>{state.runs=Math.max(0,state.runs-1);renderResults();persist();};
+
+$("prevBatter").onclick=()=>{
+  if(offensiveTeam()!=="浜松南")return;
+  state.batter=(state.batter-1+lineup.length)%lineup.length;
+  resetAtBat();renderAll();
+};
+$("nextBatter").onclick=()=>{
+  if(offensiveTeam()!=="浜松南")return;
+  state.batter=(state.batter+1)%lineup.length;
+  resetAtBat();renderAll();
+};
+
+$("half").onchange=e=>{state.half=e.target.value;resetAtBat();renderAll();};
+$("inning").onchange=e=>{state.inning=Number(e.target.value);resetAtBat();renderAll();};
+$("opponent").oninput=e=>{state.opponent=e.target.value||"相手校";renderAll();};
+$("comment").oninput=e=>{state.comment=e.target.value;persist();};
+
+$("steal").onclick=()=>{
+  const v=$("comment").value;
+  $("comment").value=(v?v+"　":"")+"→盗塁";
+  state.comment=$("comment").value;persist();
+};
+$("advance").onclick=()=>{
+  const v=$("comment").value;
+  $("comment").value=(v?v+"　":"")+"→進塁（暴投・悪送球等）";
+  state.comment=$("comment").value;persist();
+};
+
+$("nextHalf").onclick=()=>{
+  if(state.half==="top")state.half="bottom";
+  else{state.half="top";state.inning=Math.min(INNINGS,state.inning+1);}
+  resetAtBat();
+  $("half").value=state.half;$("inning").value=state.inning;
+  renderAll();window.scrollTo({top:0,behavior:"smooth"});
+};
+
+$("clearCurrent").onclick=()=>{
+  if(!confirm("現在の回の記録をすべて削除して修正しますか？"))return;
+  const targetIn=state.inning,targetHalf=state.half;
+  state.records=state.records.filter(r=>!(r.inning===targetIn&&r.half===targetHalf));
+  state.scores.ham[targetIn-1]=state.records.filter(r=>r.inning===targetIn&&r.half==="top"&&state.half==="top")
+    .reduce((s,r)=>s+r.runs,0)+state.records.filter(r=>r.inning===targetIn&&r.half==="bottom"&&state.half==="bottom")
+    .reduce((s,r)=>s+r.runs,0);
+  // Recalculate both teams from all remaining records so先攻/後攻に関係なく正しい。
+  state.scores.ham=Array(INNINGS).fill(0);state.scores.opp=Array(INNINGS).fill(0);
+  state.records.forEach(r=>{
+    if(r.half==="top")state.scores[state.half==="top"?"ham":"opp"][r.inning-1]+=r.runs;
+    else state.scores[state.half==="top"?"opp":"ham"][r.inning-1]+=r.runs;
+  });
+  resetAtBat();renderAll();
+};
+
+$("copy").onclick=async()=>{
+  try{
+    await navigator.clipboard.writeText($("preview").textContent);
+    alert("速報をコピーしました。LINEに貼り付けできます。");
+  }catch(e){
+    alert("コピーできませんでした。速報欄を長押ししてコピーしてください。");
+  }
+};
+
+$("opponent").value=state.opponent;
+$("half").value=state.half;
+$("inning").value=state.inning;
 renderAll();
 </script>
 </body>
