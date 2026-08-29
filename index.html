@@ -55,6 +55,8 @@ button.small{font-size:13px;padding:8px 10px}.two{display:grid;grid-template-col
     <div><label>現在のイニング</label><select id="inning"></select></div>
     <div><label>現在の攻撃</label><div id="sideLabel" class="pill"></div></div>
   </div>
+  <button class="danger" style="width:100%;margin-top:10px" id="clearGame">速報データを全消去（メンバー表は残す）</button>
+  <div class="notice" style="margin-top:6px">試合終了後や入力を中止するときに使用します。試合記録・スコア・相手校名などを消去し、メンバー表は残します。</div>
 </section>
 
 <section class="card">
@@ -297,6 +299,17 @@ $("nextHalf").onclick=()=>{
   resetAtBat();
   $("half").value=state.half;$("inning").value=state.inning;
   renderAll();window.scrollTo({top:0,behavior:"smooth"});
+};
+
+$("clearGame").onclick=()=>{
+  if(!confirm("速報データをすべて消去しますか？\n\nメンバー表は残ります。\n試合記録・スコア・相手校名・先攻後攻・イニングなどは初期状態に戻ります。"))return;
+  state=JSON.parse(JSON.stringify(defaultState));
+  $("opponent").value=state.opponent;
+  $("half").value=state.half;
+  $("inning").value=state.inning;
+  renderAll();
+  window.scrollTo({top:0,behavior:"smooth"});
+  alert("速報データを消去しました。メンバー表は残っています。");
 };
 
 $("clearCurrent").onclick=()=>{
