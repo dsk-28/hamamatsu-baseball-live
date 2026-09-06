@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>浜松南 野球速報</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<title>浜松南 野球速報 v5</title>
 <style>
 :root{--bg:#f5f7fa;--card:#fff;--text:#17202a;--muted:#667085;--line:#dfe3e8;--accent:#1677ff;--danger:#e5484d;--green:#16803c}
 *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif}
@@ -54,7 +56,10 @@ button.small{font-size:13px;padding:8px 10px}.notice{font-size:12px;color:var(--
 <div><label>現在のイニング</label><select id="inning"></select></div>
 <div><label>現在の攻撃</label><div id="sideLabel" class="pill"></div></div>
 </div>
-<button class="danger" style="width:100%;margin-top:10px" id="clearGame">速報データを全消去（メンバー表・打順は残す）</button>
+<div class="two" style="margin-top:10px">
+<button class="danger" id="clearGame">速報データを全消去</button>
+<button class="primary" id="newGame">新しい試合を開始</button>
+</div>
 </section>
 
 <section class="card">
@@ -146,8 +151,8 @@ let state=loadState(); const $=id=>document.getElementById(id);
 for(let i=1;i<=INNINGS;i++)$("inning").insertAdjacentHTML("beforeend",`<option value="${i}">${i}回</option>`);
 
 function clone(o){return JSON.parse(JSON.stringify(o))}
-function loadState(){try{const s=JSON.parse(localStorage.getItem("hamamatsuBaseballLive"));if(s){const x=Object.assign(clone(defaultState),s);x.battingOrder=Array.isArray(s.battingOrder)&&s.battingOrder.length===9?s.battingOrder:clone(defaultState.battingOrder);x.scores={ham:Array.from({length:INNINGS},(_,i)=>(s.scores?.ham||[])[i]||0),opp:Array.from({length:INNINGS},(_,i)=>(s.scores?.opp||[])[i]||0)};x.records=s.records||[];x.bases=Array.isArray(s.bases)?s.bases:[false,false,false];return x}}catch(e){}return clone(defaultState)}
-function persist(){localStorage.setItem("hamamatsuBaseballLive",JSON.stringify(state))}
+function loadState(){try{const s=JSON.parse(localStorage.getItem("hamamatsuBaseballLive_v5"));if(s){const x=clone(defaultState);x.opponent=s.opponent||"相手校";x.half=s.half==="bottom"?"bottom":"top";x.inning=Math.min(INNINGS,Math.max(1,Number(s.inning)||1));x.batter=Math.min(8,Math.max(0,Number(s.batter)||0));x.battingOrder=Array.isArray(s.battingOrder)&&s.battingOrder.length===9?s.battingOrder.map(n=>Math.max(0,Math.min(lineup.length-1,Number(n)||0))):clone(defaultState.battingOrder);x.result=s.result||"";x.resultGroup=s.resultGroup||"";x.position=s.position||"";x.runs=Math.max(0,Number(s.runs)||0);x.comment=s.comment||"";x.records=Array.isArray(s.records)?s.records:[];x.bases=Array.isArray(s.bases)?s.bases.slice(0,3):[false,false,false];return x}}catch(e){}return clone(defaultState)}
+function persist(){localStorage.setItem("hamamatsuBaseballLive_v5",JSON.stringify(state))}
 function offensiveTeam(){return state.half==="top"?"浜松南":state.opponent}
 function isHamAttack(){return offensiveTeam()==="浜松南"}
 function resetAtBat(){state.result="";state.resultGroup="";state.position="";state.runs=0;state.comment=""}
@@ -173,7 +178,9 @@ $("stealEvent").onclick=()=>runnerEvent="盗塁";$("pickoffEvent").onclick=()=>r
 $("saveRunnerEvent").onclick=()=>{let text=runnerEvent;if(!text&&$("runnerCommentText").value.trim())text="走者プレー";if($("runnerCommentText").value.trim())text+=(text?"：":"")+$("runnerCommentText").value.trim();if(!text){alert("走者プレーを選択または入力してください。");return}let runs=text.includes("生還")?1:0;state.records.push({kind:"runner",inning:state.inning,half:state.half,text,runs});if(runs)state.bases[2]=false;recalcScores();runnerEvent="";$("runnerCommentText").value="";persist();renderAll()};
 $("nextHalf").onclick=()=>{if(state.half==="top")state.half="bottom";else{state.half="top";state.inning=Math.min(INNINGS,state.inning+1)}state.bases=[false,false,false];resetAtBat();persist();renderAll();window.scrollTo({top:0,behavior:"smooth"})};
 $("clearCurrent").onclick=()=>{if(!confirm("現在の回の速報をすべて削除しますか？スコアもこの回の分だけ戻します。"))return;state.records=state.records.filter(r=>!(r.inning===state.inning&&r.half===state.half));recalcScores();state.bases=[false,false,false];resetAtBat();persist();renderAll()};
-$("clearGame").onclick=()=>{if(!confirm("速報データをすべて消去しますか？メンバー表と打順は残ります。"))return;const keep={opponent:state.opponent,half:"top",inning:1,batter:0,battingOrder:state.battingOrder};state=Object.assign(clone(defaultState),keep);persist();renderAll()};
+function startNewGame(){const keepOrder=Array.isArray(state.battingOrder)&&state.battingOrder.length===9?state.battingOrder.slice():clone(defaultState.battingOrder);state=clone(defaultState);state.battingOrder=keepOrder;persist();renderAll();window.scrollTo({top:0,behavior:"smooth"})}
+$("clearGame").onclick=()=>{if(!confirm("速報データ・スコアをすべて消去しますか？打順は残ります。"))return;startNewGame()};
+$("newGame").onclick=()=>{if(!confirm("新しい試合を開始します。前の試合のスコアと速報は消えます。打順は残ります。"))return;startNewGame()};
 $("saveBattingOrder").onclick=()=>{persist();alert("打順を登録しました。")};
 $("copy").onclick=async()=>{try{await navigator.clipboard.writeText($("preview").textContent);alert("速報をコピーしました。LINEに貼り付けできます。")}catch(e){alert("コピーできませんでした。速報欄を長押ししてコピーしてください。")}};
 renderAll();
