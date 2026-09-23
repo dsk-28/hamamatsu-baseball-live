@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
-<title>浜松南 野球速報 v9</title>
+<title>浜松南 野球速報 v11</title>
 <style>
 :root{--bg:#f5f7fa;--card:#fff;--text:#17202a;--muted:#667085;--line:#dfe3e8;--accent:#1677ff;--danger:#e5484d;--green:#16803c}
 *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif}
@@ -69,6 +69,16 @@ button.small{font-size:13px;padding:8px 10px}.notice{font-size:12px;color:var(--
 </section>
 
 <section class="card">
+<label>自チームメンバー管理</label>
+<div class="notice" style="margin-bottom:8px">新入生の追加、名前の変更、卒業・退部した選手の非表示ができます。ここで登録した現役選手が打順登録の候補になります。</div>
+<div class="two">
+<input id="memberNameInput" placeholder="新しい選手名">
+<button class="primary" id="addMember">メンバーを追加</button>
+</div>
+<div id="memberList" class="history"></div>
+</section>
+
+<section class="card">
 <label>現在の打者</label>
 <div class="two">
 <div><label>通常は自動で次の打者へ</label><div id="batterName" style="font-size:22px;font-weight:900;text-align:center;padding:10px;background:#f3f5f8;border-radius:10px">打者</div></div>
@@ -126,7 +136,7 @@ button.small{font-size:13px;padding:8px 10px}.notice{font-size:12px;color:var(--
 </div>
 
 <script>
-const lineup=["齊藤","鈴木","山本","本間","宮崎","篠原","馬渡","中川","永井","太田","伊藤","西岡"];
+const initialMembers=["齊藤","鈴木","山本","本間","宮崎","篠原","馬渡","中川","永井","太田","伊藤","西岡"];
 const resultGroups={
 "アウト":["三振","ゴロアウト","フライアウト","ライナーアウト"],
 "ヒット":["単打","二塁打","三塁打","本塁打"],
@@ -137,26 +147,75 @@ const resultGroups={
 };
 const positions=["投","捕","一","二","三","遊","左","中","右"];
 const INNINGS=15;
-const defaultState={opponent:"相手校",half:"top",inning:1,batter:0,battingOrder:[0,1,2,3,4,5,6,7,8],result:"",resultGroup:"",position:"",runs:0,comment:"",records:[],scores:{ham:Array(INNINGS).fill(0),opp:Array(INNINGS).fill(0)},bases:[false,false,false]};
+const STORAGE_KEY="hamamatsuBaseballLive_v11";
+const LEGACY_KEYS=["hamamatsuBaseballLive_v7"];
+const defaultState={opponent:"相手校",half:"top",inning:1,batter:0,battingOrder:[0,1,2,3,4,5,6,7,8],members:initialMembers.slice(),retired:Array(initialMembers.length).fill(false),result:"",resultGroup:"",position:"",runs:0,comment:"",records:[],scores:{ham:Array(INNINGS).fill(0),opp:Array(INNINGS).fill(0)},bases:[false,false,false]};
 let state=loadState(); const $=id=>document.getElementById(id);
 for(let i=1;i<=INNINGS;i++)$("inning").insertAdjacentHTML("beforeend",`<option value="${i}">${i}回</option>`);
 
 function clone(o){return JSON.parse(JSON.stringify(o))}
-function loadState(){try{const s=JSON.parse(localStorage.getItem("hamamatsuBaseballLive_v7"));if(s){const x=clone(defaultState);x.opponent=s.opponent||"相手校";x.half=s.half==="bottom"?"bottom":"top";x.inning=Math.min(INNINGS,Math.max(1,Number(s.inning)||1));x.batter=Math.min(8,Math.max(0,Number(s.batter)||0));x.battingOrder=Array.isArray(s.battingOrder)&&s.battingOrder.length===9?s.battingOrder.map(n=>Math.max(0,Math.min(lineup.length-1,Number(n)||0))):clone(defaultState.battingOrder);x.result=s.result||"";x.resultGroup=s.resultGroup||"";x.position=s.position||"";x.runs=Math.max(0,Number(s.runs)||0);x.comment=s.comment||"";x.records=Array.isArray(s.records)?s.records:[];x.bases=Array.isArray(s.bases)?s.bases.slice(0,3):[false,false,false];return x}}catch(e){}return clone(defaultState)}
-function persist(){localStorage.setItem("hamamatsuBaseballLive_v7",JSON.stringify(state))}
+function loadState(){
+ try{
+  const s=JSON.parse(localStorage.getItem(STORAGE_KEY));
+  if(s){
+   const x=clone(defaultState);
+   x.opponent=s.opponent||"相手校";
+   x.half=s.half==="bottom"?"bottom":"top";
+   x.inning=Math.min(INNINGS,Math.max(1,Number(s.inning)||1));
+   x.members=Array.isArray(s.members)&&s.members.length?s.members.map(n=>String(n).trim()).filter(Boolean):initialMembers.slice();
+   x.retired=Array.isArray(s.retired)?x.members.map((_,i)=>!!s.retired[i]):x.members.map(()=>false);
+   while(x.retired.length<x.members.length)x.retired.push(false);
+   x.battingOrder=Array.isArray(s.battingOrder)&&s.battingOrder.length===9?s.battingOrder.map(n=>Math.max(0,Math.min(x.members.length-1,Number(n)||0))):clone(defaultState.battingOrder);
+   x.batter=Math.min(8,Math.max(0,Number(s.batter)||0));
+   x.result=s.result||"";x.resultGroup=s.resultGroup||"";x.position=s.position||"";
+   x.runs=Math.max(0,Number(s.runs)||0);x.comment=s.comment||"";
+   x.records=Array.isArray(s.records)?s.records:[];
+   x.bases=Array.isArray(s.bases)?s.bases.slice(0,3):[false,false,false];
+   return x;
+  }
+ }catch(e){}
+ return clone(defaultState);
+}
+function persist(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}
 function offensiveTeam(){return state.half==="top"?"浜松南":state.opponent}
 function isHamAttack(){return offensiveTeam()==="浜松南"}
 function resetAtBat(){state.result="";state.resultGroup="";state.position="";state.runs=0;state.comment=""}
 function total(a){return a.reduce((x,y)=>x+y,0)}
 function recalcScores(){state.scores.ham=Array(INNINGS).fill(0);state.scores.opp=Array(INNINGS).fill(0);state.records.forEach(r=>{let i=r.inning-1;if(i<0||i>=INNINGS)return;if(r.kind==="atbat"){if(r.half==="top")state.scores.ham[i]+=r.runs;else state.scores.opp[i]+=r.runs;}if(r.kind==="runner"&&r.runs){if(r.half==="top")state.scores.ham[i]+=r.runs;else state.scores.opp[i]+=r.runs;}})}
 function renderScore(){const ham=state.scores.ham,opp=state.scores.opp,firstHam=state.half==="top";const header="<tr><th></th>"+Array.from({length:INNINGS},(_,i)=>`<th>${i+1}</th>`).join("")+"<th>計</th></tr>";const cells=a=>a.map(x=>`<td>${x}</td>`).join("");const f=firstHam?ham:opp,s=firstHam?opp:ham;const fn=firstHam?"浜松南":state.opponent,sn=firstHam?state.opponent:"浜松南";$("scoreTable").innerHTML=header+`<tr><td>${fn}</td>${cells(f)}<td class="total">${total(f)}</td></tr><tr><td>${sn}</td>${cells(s)}<td class="total">${total(s)}</td></tr>`}
-function renderBattingOrder(){ $("battingOrderInputs").innerHTML=state.battingOrder.map((idx,i)=>`<div class="batting-item"><div class="batting-no">${i+1}番</div><select data-order="${i}">${lineup.map((n,j)=>`<option value="${j}" ${j===idx?"selected":""}>${n}</option>`).join("")}</select></div>`).join("");document.querySelectorAll("#battingOrderInputs select").forEach(s=>s.onchange=e=>{state.battingOrder[+e.target.dataset.order]=+e.target.value;persist()})}
+function renderBattingOrder(){
+ const active=state.members.map((n,i)=>({n,i})).filter(x=>!state.retired[x.i]);
+ $("battingOrderInputs").innerHTML=state.battingOrder.map((idx,i)=>{
+   const selectedInactive=(state.retired[idx]&&state.members[idx])?`<option value="${idx}" selected>${state.members[idx]}（卒業・退部）</option>`:"";
+   const options=active.map(x=>`<option value="${x.i}" ${x.i===idx?"selected":""}>${x.n}</option>`).join("");
+   return `<div class="batting-item"><div class="batting-no">${i+1}番</div><select data-order="${i}">${selectedInactive}${options}</select></div>`;
+ }).join("");
+ document.querySelectorAll("#battingOrderInputs select").forEach(s=>s.onchange=e=>{state.battingOrder[+e.target.dataset.order]=+e.target.value;persist();renderLineup()});
+}
+function renderMembers(){
+ const box=$("memberList");
+ box.innerHTML=state.members.map((name,i)=>`<div class="entry">
+   <div class="row" style="justify-content:space-between">
+     <div style="flex:1"><input data-member-name="${i}" value="${name}" aria-label="${name}"></div>
+     <button class="small ${state.retired[i]?"":"danger"}" data-toggle-member="${i}">${state.retired[i]?"現役に戻す":"卒業・退部"}</button>
+   </div>
+ </div>`).join("");
+ document.querySelectorAll("[data-member-name]").forEach(inp=>inp.onchange=e=>{
+   const i=+e.target.dataset.memberName, name=e.target.value.trim();
+   if(!name){e.target.value=state.members[i];return}
+   state.members[i]=name;persist();renderMembers();renderBattingOrder();renderLineup();
+ });
+ document.querySelectorAll("[data-toggle-member]").forEach(b=>b.onclick=()=>{
+   const i=+b.dataset.toggleMember;state.retired[i]=!state.retired[i];
+   persist();renderMembers();renderBattingOrder();renderLineup();
+ });
+}
 function renderLineup(){
  const ham=isHamAttack();
- $("batterName").textContent=ham?`${state.batter+1}番　${lineup[state.battingOrder[state.batter]]||"打者"}`:"相手攻撃";
+ $("batterName").textContent=ham?`${state.batter+1}番　${state.members[state.battingOrder[state.batter]]||"打者"}`:"相手攻撃";
  $("resumeBatter").classList.toggle("hidden",!ham);
  if(ham){
-   $("resumeBatter").innerHTML=state.battingOrder.map((idx,i)=>`<option value="${i}" ${i===state.batter?"selected":""}>${i+1}番　${lineup[idx]}</option>`).join("");
+   $("resumeBatter").innerHTML=state.battingOrder.map((idx,i)=>`<option value="${i}" ${i===state.batter?"selected":""}>${i+1}番　${state.members[idx]||"未登録"}</option>`).join("");
  }
  $("sideLabel").textContent=`${state.inning}回${state.half==="top"?"表":"裏"}：${offensiveTeam()}`;
 }
@@ -171,12 +230,12 @@ function renderResults(){
 }
 function renderBases(){}
 function renderCurrent(){const arr=state.records.filter(r=>r.inning===state.inning&&r.half===state.half);$("currentInning").innerHTML=arr.length?arr.map(r=>`<div class="entry">${r.text}</div>`).join(""):"まだ記録はありません。"}
-function renderPreview(){const opp=state.opponent||"相手校";const arr=state.records.filter(r=>r.inning===state.inning&&r.half===state.half);let lines=[];lines.push(`【${state.inning}回${state.half==="top"?"表":"裏"}】`);arr.forEach(r=>lines.push(r.text));const s=state.scores.ham.reduce((a,b)=>a+b,0),o=state.scores.opp.reduce((a,b)=>a+b,0);lines.push("");lines.push("【スコアボード】");lines.push(`浜松南 ${s} - ${opp} ${o}`);let cols=[];for(let i=0;i<INNINGS;i++){if(state.scores.ham[i]||state.scores.opp[i]||i<state.inning)cols.push(`${i+1}:${state.scores.ham[i]}-${state.scores.opp[i]}`)}lines.push(cols.join("  "));$("preview").textContent=lines.join("\\n")}
-function renderAll(){renderScore();renderBattingOrder();renderLineup();renderResults();renderBases();renderCurrent();renderPreview();$("opponent").value=state.opponent;$("half").value=state.half;$("inning").value=state.inning}
+function renderPreview(){const opp=state.opponent||"相手校";const arr=state.records.filter(r=>r.inning===state.inning&&r.half===state.half);let lines=[];lines.push(`【${state.inning}回${state.half==="top"?"表":"裏"}】`);arr.forEach(r=>lines.push(r.text));const s=state.scores.ham.reduce((a,b)=>a+b,0),o=state.scores.opp.reduce((a,b)=>a+b,0);lines.push("");lines.push("【スコアボード】");lines.push(`浜松南 ${s} - ${opp} ${o}`);let cols=[];for(let i=0;i<INNINGS;i++){if(state.scores.ham[i]||state.scores.opp[i]||i<state.inning)cols.push(`${i+1}:${state.scores.ham[i]}-${state.scores.opp[i]}`)}lines.push(cols.join("  "));$("preview").textContent=lines.join("\n")}
+function renderAll(){renderScore();renderBattingOrder();renderMembers();renderLineup();renderResults();renderBases();renderCurrent();renderPreview();$("opponent").value=state.opponent;$("half").value=state.half;$("inning").value=state.inning}
 
 $("saveAtBat").onclick=()=>{
  if(!state.result){alert("打席結果を選択してください。");return}
- let text=isHamAttack()?`${lineup[state.battingOrder[state.batter]]}　`:"";
+ let text=isHamAttack()?`${state.members[state.battingOrder[state.batter]]||"打者"}　`:"";
  text+=state.result;
  if(state.position&&/ゴロ|フライ|ライナー|安打|失策|犠/.test(state.result))text+=`（${state.position}）`;
  if(state.runs>0)text+=`　${state.runs}点`;
@@ -197,17 +256,29 @@ $("stealEvent").onclick=()=>runnerEvent="盗塁";$("pickoffEvent").onclick=()=>r
 $("saveRunnerEvent").onclick=()=>{let text=runnerEvent;if(!text&&$("runnerCommentText").value.trim())text="走者プレー";if($("runnerCommentText").value.trim())text+=(text?"：":"")+$("runnerCommentText").value.trim();if(!text){alert("走者プレーを選択または入力してください。");return}let runs=text.includes("生還")?1:0;state.records.push({kind:"runner",inning:state.inning,half:state.half,text,runs});recalcScores();runnerEvent="";$("runnerCommentText").value="";persist();renderAll()};
 $("nextHalf").onclick=()=>{if(state.half==="top")state.half="bottom";else{state.half="top";state.inning=Math.min(INNINGS,state.inning+1)}resetAtBat();persist();renderAll();window.scrollTo({top:0,behavior:"smooth"})};
 $("clearCurrent").onclick=()=>{if(!confirm("現在の回の速報をすべて削除しますか？スコアもこの回の分だけ戻します。"))return;state.records=state.records.filter(r=>!(r.inning===state.inning&&r.half===state.half));recalcScores();state.bases=[false,false,false];resetAtBat();persist();renderAll()};
-function startNewGame(){const keepOrder=Array.isArray(state.battingOrder)&&state.battingOrder.length===9?state.battingOrder.slice():clone(defaultState.battingOrder);state=clone(defaultState);state.battingOrder=keepOrder;persist();renderAll();window.scrollTo({top:0,behavior:"smooth"})}
-$("clearGame").onclick=()=>{
-  if(!confirm("速報データ・スコアをすべて消去しますか？打順は残ります。"))return;
-  const keepOrder=Array.isArray(state.battingOrder)&&state.battingOrder.length===9?state.battingOrder.slice():clone(defaultState.battingOrder);
-  state=clone(defaultState);
-  state.battingOrder=keepOrder;
-  persist();
-  renderAll();
-  alert("速報データを消去しました。");
+function startNewGame(){
+ const keepOrder=Array.isArray(state.battingOrder)&&state.battingOrder.length===9?state.battingOrder.slice():clone(defaultState.battingOrder);
+ const keepMembers=Array.isArray(state.members)&&state.members.length?state.members.slice():initialMembers.slice();
+ const keepRetired=Array.isArray(state.retired)?state.retired.slice():keepMembers.map(()=>false);
+ LEGACY_KEYS.forEach(k=>localStorage.removeItem(k));
+ localStorage.removeItem(STORAGE_KEY);
+ state=clone(defaultState);
+ state.members=keepMembers;
+ state.retired=keepMembers.map((_,i)=>!!keepRetired[i]);
+ state.battingOrder=keepOrder.map(n=>Math.max(0,Math.min(state.members.length-1,Number(n)||0)));
+ persist();renderAll();window.scrollTo({top:0,behavior:"smooth"});
+}
+$("clearGame").onclick=()=>{if(!confirm("速報データ・スコアをすべて消去しますか？登録メンバーと打順は残ります。"))return;startNewGame();alert("速報データを消去しました。")};
+$("newGame").onclick=()=>{if(!confirm("新しい試合を開始します。前の試合のスコアと速報は消えます。登録メンバーと打順は残ります。"))return;startNewGame()};
+
+$("addMember").onclick=()=>{
+ const input=$("memberNameInput"),name=input.value.trim();
+ if(!name){alert("選手名を入力してください。");input.focus();return}
+ if(state.members.includes(name)){alert("同じ名前の選手がすでに登録されています。");return}
+ state.members.push(name);state.retired.push(false);input.value="";
+ persist();renderMembers();renderBattingOrder();renderLineup();input.focus();
 };
-$("newGame").onclick=()=>{if(!confirm("新しい試合を開始します。前の試合のスコアと速報は消えます。打順は残ります。"))return;startNewGame()};
+$("memberNameInput").onkeydown=e=>{if(e.key==="Enter")$("addMember").click()};
 $("saveBattingOrder").onclick=()=>{persist();alert("打順を登録しました。")};
 $("copy").onclick=async()=>{try{await navigator.clipboard.writeText($("preview").textContent);alert("速報をコピーしました。LINEに貼り付けできます。")}catch(e){alert("コピーできませんでした。速報欄を長押ししてコピーしてください。")}};
 renderAll();
