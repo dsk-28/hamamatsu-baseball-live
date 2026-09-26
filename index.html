@@ -128,7 +128,7 @@ button.small{font-size:13px;padding:8px 10px}.notice{font-size:12px;color:var(--
 </section>
 
 <section class="card">
-<label>現在の回の速報</label>
+<label>現在のイニング速報（表・裏）</label>
 <div id="currentInning" class="history"></div>
 <div class="two" style="margin-top:10px">
 <button id="nextHalf" class="primary">次の攻撃へ</button>
@@ -137,9 +137,9 @@ button.small{font-size:13px;padding:8px 10px}.notice{font-size:12px;color:var(--
 </section>
 
 <section class="card">
-<label>LINE送信用速報（現在の1イニング）</label>
+<label>LINE送信用速報（1イニング・表＋裏）</label>
 <div id="preview" class="preview"></div>
-<button class="primary" style="width:100%;margin-top:10px" id="copy">速報をコピー</button>
+<button class="primary" style="width:100%;margin-top:10px" id="copy">この1イニング（表＋裏）をコピー</button>
 </section>
 </main>
 </div>
@@ -244,8 +244,36 @@ function renderResults(){
  $("runCount").textContent=state.runs
 }
 function renderBases(){}
-function renderCurrent(){const arr=state.records.filter(r=>r.inning===state.inning&&r.half===state.half);$("currentInning").innerHTML=arr.length?arr.map(r=>`<div class="entry">${r.text}</div>`).join(""):"まだ記録はありません。"}
-function renderPreview(){const opp=state.opponent||"相手校";const arr=state.records.filter(r=>r.inning===state.inning&&r.half===state.half);let lines=[];lines.push(`【${state.inning}回${state.half==="top"?"表":"裏"}】`);arr.forEach(r=>lines.push(r.text));const s=state.scores.ham.reduce((a,b)=>a+b,0),o=state.scores.opp.reduce((a,b)=>a+b,0);lines.push("");lines.push("【スコアボード】");lines.push(`浜松南 ${s} - ${opp} ${o}`);let cols=[];for(let i=0;i<INNINGS;i++){if(state.scores.ham[i]||state.scores.opp[i]||i<state.inning)cols.push(`${i+1}:${state.scores.ham[i]}-${state.scores.opp[i]}`)}lines.push(cols.join("  "));$("preview").textContent=lines.join("\n")}
+function renderCurrent(){
+ const top=state.records.filter(r=>r.inning===state.inning&&r.half==="top");
+ const bottom=state.records.filter(r=>r.inning===state.inning&&r.half==="bottom");
+ let html=`<div class="entry" style="font-weight:900">【${state.inning}回表】</div>`;
+ html+=top.length?top.map(r=>`<div class="entry">${r.text}</div>`).join(""):`<div class="entry" style="color:#98a2b3">まだ記録はありません。</div>`;
+ html+=`<div class="entry" style="font-weight:900;margin-top:6px">【${state.inning}回裏】</div>`;
+ html+=bottom.length?bottom.map(r=>`<div class="entry">${r.text}</div>`).join(""):`<div class="entry" style="color:#98a2b3">まだ記録はありません。</div>`;
+ $("currentInning").innerHTML=html;
+}
+function renderPreview(){
+ const opp=state.opponent||"相手校";
+ const top=state.records.filter(r=>r.inning===state.inning&&r.half==="top");
+ const bottom=state.records.filter(r=>r.inning===state.inning&&r.half==="bottom");
+ let lines=[];
+ lines.push(`【${state.inning}回表】`);
+ if(top.length)top.forEach(r=>lines.push(r.text));else lines.push("（記録なし）");
+ lines.push("");
+ lines.push(`【${state.inning}回裏】`);
+ if(bottom.length)bottom.forEach(r=>lines.push(r.text));else lines.push("（記録なし）");
+ const s=state.scores.ham.reduce((a,b)=>a+b,0),o=state.scores.opp.reduce((a,b)=>a+b,0);
+ lines.push("");
+ lines.push("【スコアボード】");
+ lines.push(`浜松南 ${s} - ${opp} ${o}`);
+ let cols=[];
+ for(let i=0;i<INNINGS;i++){
+   if(state.scores.ham[i]||state.scores.opp[i]||i<state.inning)cols.push(`${i+1}:${state.scores.ham[i]}-${state.scores.opp[i]}`)
+ }
+ lines.push(cols.join("  "));
+ $("preview").textContent=lines.join("\n")
+}
 function renderAll(){renderScore();renderBattingOrder();renderMembers();renderLineup();renderResults();renderBases();renderCurrent();renderPreview();$("opponent").value=state.opponent;$("half").value=state.half;$("inning").value=state.inning}
 
 $("saveAtBat").onclick=()=>{
