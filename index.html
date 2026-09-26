@@ -17,6 +17,7 @@
 .score th,.score td{border-right:1px solid var(--line);padding:6px 7px;white-space:nowrap}
 .score th:first-child,.score td:first-child{position:sticky;left:0;background:#fff;text-align:left;font-weight:900;min-width:92px}
 .score .total{font-size:15px;font-weight:900}
+.score-edit-panel{margin:8px 12px 0;padding:10px;scroll-margin-top:115px}
 main{padding:12px}.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
 h1{font-size:20px;margin:2px 0 12px}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 label{font-size:13px;color:var(--muted);font-weight:800;display:block;margin-bottom:6px}
@@ -44,13 +45,14 @@ button.small{font-size:13px;padding:8px 10px}.notice{font-size:12px;color:var(--
   <div class="score-title">スコアボード</div>
   <div class="score-wrap"><table class="score" id="scoreTable"></table></div>
 <button class="small" id="toggleScoreEdit" style="margin-top:7px;width:100%">試合開始後から記録：スコアを手入力</button>
-<div id="scoreEdit" class="card hidden" style="margin:8px 0 0;padding:10px">
+</header>
+
+<div id="scoreEdit" class="card hidden score-edit-panel">
   <div class="section-title">スコア手入力</div>
   <div class="notice">試合途中から記録するときに、これまでの各回の得点を入力してください。以後の打席記録で入る得点は自動加算されます。</div>
   <div id="scoreEditGrid" style="overflow-x:auto;margin-top:8px"></div>
   <button class="primary" id="saveScoreEdit" style="width:100%;margin-top:8px">スコアを保存</button>
 </div>
-</header>
 
 <main>
 <section class="card">
@@ -263,15 +265,17 @@ function renderPreview(){
  lines.push("");
  lines.push(`【${state.inning}回裏】`);
  if(bottom.length)bottom.forEach(r=>lines.push(r.text));else lines.push("（記録なし）");
- const s=state.scores.ham.reduce((a,b)=>a+b,0),o=state.scores.opp.reduce((a,b)=>a+b,0);
  lines.push("");
- lines.push("【スコアボード】");
- lines.push(`浜松南 ${s} - ${opp} ${o}`);
- let cols=[];
- for(let i=0;i<INNINGS;i++){
-   if(state.scores.ham[i]||state.scores.opp[i]||i<state.inning)cols.push(`${i+1}:${state.scores.ham[i]}-${state.scores.opp[i]}`)
- }
- lines.push(cols.join("  "));
+
+ // LINE実物に合わせ、スコアボードはイニング番号や「計」を表示せず、
+ // チーム名＋各回の得点を横一列で表示する。
+ const hamLabel="浜南";
+ const oppLabel=opp;
+ const lastInning=Math.max(1,state.inning);
+ const hamLine=state.scores.ham.slice(0,lastInning).map(n=>String(n)).join("");
+ const oppLine=state.scores.opp.slice(0,lastInning).map(n=>String(n)).join("");
+ lines.push(hamLabel.padEnd(4," ")+" "+hamLine);
+ lines.push(oppLabel.padEnd(4," ")+" "+oppLine);
  $("preview").textContent=lines.join("\n")
 }
 function renderAll(){renderScore();renderBattingOrder();renderMembers();renderLineup();renderResults();renderBases();renderCurrent();renderPreview();$("opponent").value=state.opponent;$("half").value=state.half;$("inning").value=state.inning}
@@ -325,7 +329,14 @@ $("memberNameInput").onkeydown=e=>{if(e.key==="Enter")$("addMember").click()};
 $("saveBattingOrder").onclick=()=>{persist();alert("打順を登録しました。")};
 $("copy").onclick=async()=>{try{await navigator.clipboard.writeText($("preview").textContent);alert("速報をコピーしました。LINEに貼り付けできます。")}catch(e){alert("コピーできませんでした。速報欄を長押ししてコピーしてください。")}};
 
-$("toggleScoreEdit").onclick=()=>{$("scoreEdit").classList.toggle("hidden");$("toggleScoreEdit").textContent=$("scoreEdit").classList.contains("hidden")?"試合開始後から記録：スコアを手入力":"スコア入力を閉じる";renderScoreEditor()};
+$("toggleScoreEdit").onclick=()=>{
+  const panel=$("scoreEdit");
+  panel.classList.toggle("hidden");
+  const opened=!panel.classList.contains("hidden");
+  $("toggleScoreEdit").textContent=opened?"スコア入力を閉じる":"試合開始後から記録：スコアを手入力";
+  renderScoreEditor();
+  if(opened)setTimeout(()=>panel.scrollIntoView({behavior:"smooth",block:"start"}),50);
+};
 $("saveScoreEdit").onclick=()=>{document.querySelectorAll("[data-score-team]").forEach(inp=>{const team=inp.dataset.scoreTeam,i=+inp.dataset.scoreInning;state.manualScores[team][i]=Math.max(0,Number(inp.value)||0)});recalcScores();persist();renderAll();alert("スコアを保存しました。")};
 $("toggleMembers").onclick=()=>{const box=$("memberManagement");box.classList.toggle("hidden");$("toggleMembers").textContent=box.classList.contains("hidden")?"メンバー表を表示":"メンバー表を閉じる"};
 renderAll();
