@@ -16,7 +16,7 @@
 .score{border-collapse:collapse;min-width:680px;width:100%;font-size:13px;text-align:center}
 .score th,.score td{border-right:1px solid var(--line);padding:6px 7px;white-space:nowrap}
 .score th:first-child,.score td:first-child{position:sticky;left:0;background:#fff;text-align:left;font-weight:900;min-width:92px}
-.score .total{font-size:15px;font-weight:900}
+.score .total{font-size:15px;font-weight:900}.score-input{width:42px;min-width:42px;border:0;background:transparent;padding:4px 0;text-align:center;font-weight:800;font-size:15px;border-radius:6px}.score-input:focus{outline:2px solid var(--accent);background:#eef4ff}
 .game-head{padding:2px 0 8px;text-align:center}.game-title{font-size:18px;font-weight:900}.game-match{font-size:16px;font-weight:800;margin-top:2px}.game-time{font-size:14px;color:var(--muted);margin-top:3px}
 .score-edit-panel{margin:8px 12px 0;padding:10px;scroll-margin-top:115px}
 main{padding:12px}.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
@@ -45,15 +45,8 @@ button.small{font-size:13px;padding:8px 10px}.notice{font-size:12px;color:var(--
 <header class="top">
   <div id="lineGameHeader" class="game-head"></div><div class="score-title">スコアボード</div>
   <div class="score-wrap"><table class="score" id="scoreTable"></table></div>
-<button class="small" id="toggleScoreEdit" style="margin-top:7px;width:100%">試合開始後から記録：スコアを手入力</button>
+<div class="notice" style="margin-top:7px;text-align:center">各イニングの得点をここへ直接入力できます</div>
 </header>
-
-<div id="scoreEdit" class="card hidden score-edit-panel">
-  <div class="section-title">スコア手入力</div>
-  <div class="notice">試合途中から記録するときに、これまでの各回の得点を入力してください。以後の打席記録で入る得点は自動加算されます。</div>
-  <div id="scoreEditGrid" style="overflow-x:auto;margin-top:8px"></div>
-  <button class="primary" id="saveScoreEdit" style="width:100%;margin-top:8px">スコアを保存</button>
-</div>
 
 <main>
 <section class="card">
@@ -125,26 +118,21 @@ button.small{font-size:13px;padding:8px 10px}.notice{font-size:12px;color:var(--
 </section>
 
 <section class="card">
-<div class="section-title">走者プレー</div>
-<div class="event-grid">
-<button id="stealEvent">盗塁</button>
-<button id="pickoffEvent">牽制アウト</button>
-<button id="wildEvent">暴投・捕逸</button>
-<button id="advanceEvent">進塁</button>
-<button id="scoreEvent">走者生還（得点）</button>
-<button id="runnerComment">自由入力</button>
-</div>
-<div style="margin-top:10px"><textarea id="runnerCommentText" rows="2" placeholder="例：二盗成功、三盗を試み牽制アウト、暴投で二塁へ進塁"></textarea></div>
-<button class="primary" style="width:100%;margin-top:10px" id="saveRunnerEvent">走者プレーを記録</button>
-</section>
-
-<section class="card">
 <label>現在のイニング速報（表・裏）</label>
 <div id="currentInning" class="history"></div>
+<div class="section-title" style="margin-top:14px">走塁プレーを追記</div>
+<div class="event-grid">
+<button id="stealEvent">盗塁</button><button id="pickoffEvent">牽制アウト</button>
+<button id="wildEvent">暴投・捕逸</button><button id="advanceEvent">進塁</button>
+<button id="scoreEvent">走者生還（得点）</button><button id="runnerComment">自由入力</button>
+</div>
+<div style="margin-top:8px"><textarea id="runnerCommentText" rows="2" placeholder="例：二盗成功、三盗を試み牽制アウト、暴投で二塁へ進塁"></textarea></div>
+<button class="primary" style="width:100%;margin-top:8px" id="saveRunnerEvent">現在の速報に追記</button>
 <div class="two" style="margin-top:10px">
 <button id="nextHalf" class="primary">次の攻撃へ</button>
-<button id="clearCurrent" class="danger">現在の回を修正</button>
+<button id="undoPlay" class="danger">1プレー戻す</button>
 </div>
+<button id="clearCurrent" class="small danger" style="width:100%;margin-top:8px">現在の攻撃を全て消す</button>
 </section>
 
 <section class="card">
@@ -209,9 +197,16 @@ function offensiveTeam(){return state.half==="top"?(state.battingFirst==="top"?"
 function isHamAttack(){return offensiveTeam()==="浜松南"}
 function resetAtBat(){state.result="";state.resultGroup="";state.position="";state.runs=0;state.comment=""}
 function total(a){return a.reduce((x,y)=>x+y,0)}
-function recalcScores(){state.scores.ham=state.manualScores.ham.slice();state.scores.opp=state.manualScores.opp.slice();state.records.forEach(r=>{let i=r.inning-1;if(i<0||i>=INNINGS)return;if(r.kind==="atbat"||r.kind==="runner"){if(r.half==="top")state.scores.ham[i]+=Number(r.runs)||0;else state.scores.opp[i]+=Number(r.runs)||0;}})}
-function renderScore(){const ham=state.scores.ham,opp=state.scores.opp,firstHam=state.battingFirst==="top";const header="<tr><th></th>"+Array.from({length:INNINGS},(_,i)=>`<th>${i+1}</th>`).join("")+"<th>計</th></tr>";const cells=a=>a.map(x=>`<td>${x}</td>`).join("");const f=firstHam?ham:opp,s=firstHam?opp:ham;const fn=firstHam?"浜松南":state.opponent,sn=firstHam?state.opponent:"浜松南";$("scoreTable").innerHTML=header+`<tr><td>${fn}</td>${cells(f)}<td class="total">${total(f)}</td></tr><tr><td>${sn}</td>${cells(s)}<td class="total">${total(s)}</td></tr>`;renderScoreEditor()}
-function renderScoreEditor(){const h=state.manualScores.ham,o=state.manualScores.opp;let html=`<table style="border-collapse:collapse;width:100%;font-size:13px"><tr><th style="padding:5px">回</th><th style="padding:5px">浜松南</th><th style="padding:5px">${state.opponent||"相手校"}</th></tr>`;for(let i=0;i<INNINGS;i++)html+=`<tr><td style="padding:4px;text-align:center">${i+1}</td><td style="padding:4px"><input inputmode="numeric" min="0" type="number" data-score-team="ham" data-score-inning="${i}" value="${h[i]||0}" style="padding:7px;text-align:center"></td><td style="padding:4px"><input inputmode="numeric" min="0" type="number" data-score-team="opp" data-score-inning="${i}" value="${o[i]||0}" style="padding:7px;text-align:center"></td></tr>`;html+='</table>';$("scoreEditGrid").innerHTML=html}
+function recalcScores(){state.scores.ham=state.manualScores.ham.slice();state.scores.opp=state.manualScores.opp.slice();state.records.forEach(r=>{let i=r.inning-1;if(i<0||i>=INNINGS)return;if(r.kind==="atbat"||r.kind==="runner"){const team=(r.half==="top")?(state.battingFirst==="top"?"ham":"opp"):(state.battingFirst==="top"?"opp":"ham");state.scores[team][i]+=Number(r.runs)||0;}})}
+function renderScore(){
+ const ham=state.scores.ham,opp=state.scores.opp,firstHam=state.battingFirst==="top";
+ const header="<tr><th></th>"+Array.from({length:INNINGS},(_,i)=>`<th>${i+1}</th>`).join("")+"<th>計</th></tr>";
+ const row=(team,a,label)=>`<tr><td>${label}</td>`+a.map((x,i)=>`<td><input class="score-input" inputmode="numeric" min="0" type="number" value="${x||0}" data-score-team="${team}" data-score-inning="${i}" aria-label="${label} ${i+1}回得点"></td>`).join("")+`<td class="total">${total(a)}</td></tr>`;
+ const f=firstHam?ham:opp,s=firstHam?opp:ham; const fn=firstHam?"浜松南":state.opponent,sn=firstHam?state.opponent:"浜松南";
+ $("scoreTable").innerHTML=header+row(firstHam?"ham":"opp",f,fn)+row(firstHam?"opp":"ham",s,sn);
+ document.querySelectorAll("[data-score-team]").forEach(inp=>{inp.onchange=()=>{const team=inp.dataset.scoreTeam,i=+inp.dataset.scoreInning; const val=Math.max(0,Number(inp.value)||0); const auto=state.records.filter(r=>r.inning===i+1).reduce((sum,r)=>sum+((r.kind==="atbat"||r.kind==="runner") && ((r.half==="top"? (state.battingFirst==="top"?"ham":"opp"):(state.battingFirst==="top"?"opp":"ham"))===team) ? (Number(r.runs)||0):0),0); state.manualScores[team][i]=Math.max(0,val-auto); recalcScores(); persist(); renderScore(); renderPreview(); renderCurrent();};});
+}
+function renderScoreEditor(){}
 function renderBattingOrder(){
  const active=state.members.map((n,i)=>({n,i})).filter(x=>!state.retired[x.i]);
  $("battingOrderInputs").innerHTML=state.battingOrder.map((idx,i)=>{
@@ -261,10 +256,11 @@ function renderBases(){}
 function renderCurrent(){
  const top=state.records.filter(r=>r.inning===state.inning&&r.half==="top");
  const bottom=state.records.filter(r=>r.inning===state.inning&&r.half==="bottom");
+ const draw=r=>r.map(x=>`<div class="entry">${x.text}</div>`).join("");
  let html=`<div class="entry" style="font-weight:900">【${state.inning}回表】</div>`;
- html+=top.length?top.map(r=>`<div class="entry">${r.text}</div>`).join(""):`<div class="entry" style="color:#98a2b3">まだ記録はありません。</div>`;
+ html+=top.length?draw(top):`<div class="entry" style="color:#98a2b3">まだ記録はありません。</div>`;
  html+=`<div class="entry" style="font-weight:900;margin-top:6px">【${state.inning}回裏】</div>`;
- html+=bottom.length?bottom.map(r=>`<div class="entry">${r.text}</div>`).join(""):`<div class="entry" style="color:#98a2b3">まだ記録はありません。</div>`;
+ html+=bottom.length?draw(bottom):`<div class="entry" style="color:#98a2b3">まだ記録はありません。</div>`;
  $("currentInning").innerHTML=html;
 }
 function renderPreview(){
@@ -317,7 +313,7 @@ $("saveAtBat").onclick=()=>{
 }
 $("plusRun").onclick=()=>{state.runs++;renderResults();persist()};$("minusRun").onclick=()=>{state.runs=Math.max(0,state.runs-1);renderResults();persist()};
 $("resumeBatter").onchange=e=>{if(isHamAttack()){state.batter=+e.target.value;resetAtBat();persist();renderAll()}}
-$("battingFirst").onchange=e=>{state.battingFirst=e.target.value;state.half=state.battingFirst;resetAtBat();persist();renderAll()};$("inning").onchange=e=>{state.inning=+e.target.value;resetAtBat();persist();renderAll()};$("opponent").oninput=e=>{state.opponent=e.target.value||"相手校";persist();renderScore();renderLineup();renderPreview();renderGameHeader()};
+$("battingFirst").onchange=e=>{state.battingFirst=e.target.value; if(state.records.length===0){state.half="top";state.inning=1;state.batter=0;} resetAtBat();persist();renderAll()};$("inning").onchange=e=>{state.inning=+e.target.value;resetAtBat();persist();renderAll()};$("opponent").oninput=e=>{state.opponent=e.target.value||"相手校";persist();renderScore();renderLineup();renderPreview();renderGameHeader()};
 $("gameTitle").oninput=e=>{state.gameTitle=e.target.value||"OPEN戦①";persist();renderPreview();renderGameHeader()};
 $("startTime").oninput=e=>{state.startTime=e.target.value;persist();renderPreview();renderGameHeader()};
 $("endTime").oninput=e=>{state.endTime=e.target.value;persist();renderPreview();renderGameHeader()};
@@ -327,9 +323,10 @@ $("setEndNow").onclick=()=>{state.endTime=nowHM();persist();renderAll()};
 $("runnerCommentText").oninput=e=>{state.comment=e.target.value;persist()};
 let runnerEvent="";
 $("stealEvent").onclick=()=>runnerEvent="盗塁";$("pickoffEvent").onclick=()=>runnerEvent="牽制アウト";$("wildEvent").onclick=()=>runnerEvent="暴投・捕逸";$("advanceEvent").onclick=()=>runnerEvent="進塁";$("scoreEvent").onclick=()=>runnerEvent="走者生還（得点）";$("runnerComment").onclick=()=>runnerEvent="自由入力";
-$("saveRunnerEvent").onclick=()=>{let text=runnerEvent;if(!text&&$("runnerCommentText").value.trim())text="走者プレー";if($("runnerCommentText").value.trim())text+=(text?"：":"")+$("runnerCommentText").value.trim();if(!text){alert("走者プレーを選択または入力してください。");return}let runs=text.includes("生還")?1:0;const idx=state.records.map((r,i)=>({r,i})).reverse().find(x=>x.r.kind==="atbat"&&x.r.inning===state.inning&&x.r.half===state.half);if(idx){idx.r.text+=`　【走者】${text}`;idx.r.runnerEvents=(idx.r.runnerEvents||[]).concat(text);idx.r.runs=(Number(idx.r.runs)||0)+runs;}else{state.records.push({kind:"runner",inning:state.inning,half:state.half,text:`【走者】${text}`,runs});}recalcScores();runnerEvent="";$("runnerCommentText").value="";persist();renderAll()};
+$("saveRunnerEvent").onclick=()=>{let text=runnerEvent;if(!text&&$("runnerCommentText").value.trim())text="走者プレー";if($("runnerCommentText").value.trim())text+=(text?"：":"")+$("runnerCommentText").value.trim();if(!text){alert("走者プレーを選択または入力してください。");return}let runs=text.includes("生還")?1:0;state.records.push({kind:"runner",inning:state.inning,half:state.half,text:`【走者】${text}`,runs});recalcScores();runnerEvent="";$("runnerCommentText").value="";persist();renderAll();};
+$("undoPlay").onclick=()=>{const idx=state.records.map((r,i)=>({r,i})).reverse().find(x=>x.r.inning===state.inning&&x.r.half===state.half);if(!idx){alert("この攻撃に戻せるプレーはありません。");return}if(!confirm(`「${idx.r.text}」を1プレー戻します。よろしいですか？`))return;state.records.splice(idx.i,1);recalcScores();resetAtBat();persist();renderAll();};
 $("nextHalf").onclick=()=>{if(state.half==="top")state.half="bottom";else{state.half="top";state.inning=Math.min(INNINGS,state.inning+1)}resetAtBat();persist();renderAll();window.scrollTo({top:0,behavior:"smooth"})};
-$("clearCurrent").onclick=()=>{if(!confirm("現在の回の速報をすべて削除しますか？スコアもこの回の分だけ戻します。"))return;state.records=state.records.filter(r=>!(r.inning===state.inning&&r.half===state.half));recalcScores();state.bases=[false,false,false];resetAtBat();persist();renderAll()};
+$("clearCurrent").onclick=()=>{if(!confirm("現在の攻撃の速報をすべて削除しますか？スコアもこの攻撃分だけ戻します。"))return;state.records=state.records.filter(r=>!(r.inning===state.inning&&r.half===state.half));recalcScores();state.bases=[false,false,false];resetAtBat();persist();renderAll()};
 function startNewGame(){
  const keepOrder=Array.isArray(state.battingOrder)&&state.battingOrder.length===9?state.battingOrder.slice():clone(defaultState.battingOrder);
  const keepMembers=Array.isArray(state.members)&&state.members.length?state.members.slice():initialMembers.slice();
@@ -357,15 +354,6 @@ $("memberNameInput").onkeydown=e=>{if(e.key==="Enter")$("addMember").click()};
 $("saveBattingOrder").onclick=()=>{persist();alert("打順を登録しました。")};
 $("copy").onclick=async()=>{try{await navigator.clipboard.writeText($("preview").textContent);alert("速報をコピーしました。LINEに貼り付けできます。")}catch(e){alert("コピーできませんでした。速報欄を長押ししてコピーしてください。")}};
 
-$("toggleScoreEdit").onclick=()=>{
-  const panel=$("scoreEdit");
-  panel.classList.toggle("hidden");
-  const opened=!panel.classList.contains("hidden");
-  $("toggleScoreEdit").textContent=opened?"スコア入力を閉じる":"試合開始後から記録：スコアを手入力";
-  renderScoreEditor();
-  if(opened)setTimeout(()=>panel.scrollIntoView({behavior:"smooth",block:"start"}),50);
-};
-$("saveScoreEdit").onclick=()=>{document.querySelectorAll("[data-score-team]").forEach(inp=>{const team=inp.dataset.scoreTeam,i=+inp.dataset.scoreInning;state.manualScores[team][i]=Math.max(0,Number(inp.value)||0)});recalcScores();persist();renderAll();alert("スコアを保存しました。")};
 $("toggleMembers").onclick=()=>{const box=$("memberManagement");box.classList.toggle("hidden");$("toggleMembers").textContent=box.classList.contains("hidden")?"メンバー表を表示":"メンバー表を閉じる"};
 renderAll();
 </script>
