@@ -27,7 +27,7 @@ input,select,textarea{font:inherit;border:1px solid #cfd5dc;border-radius:10px;p
 button{border:0;border-radius:11px;padding:11px 13px;background:#eef1f5;color:#17202a;font-weight:900;font-size:15px;cursor:pointer}
 button.primary{background:var(--accent);color:#fff}button.selected{background:#17202a;color:#fff}button.danger{background:#fff0f0;color:var(--danger)}
 button.small{font-size:13px;padding:8px 10px}.notice{font-size:12px;color:var(--muted);line-height:1.5}
-.batting-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.batting-item{display:grid;grid-template-columns:38px 1fr;gap:6px;align-items:center}.batting-no{text-align:center;font-weight:900}
+.batting-grid{display:grid;grid-template-columns:1fr;gap:8px}.batting-item{display:grid;grid-template-columns:42px minmax(100px,1fr) 108px;gap:6px;align-items:center}.batting-no{text-align:center;font-weight:900}.position-select{min-width:0;padding:10px 4px;font-size:14px}
 .result-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.result-grid button{min-height:52px}
 .subgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:8px}
 .subgrid button{min-height:44px}.section-title{font-weight:900;font-size:15px;margin-bottom:8px}
@@ -37,7 +37,7 @@ button.small{font-size:13px;padding:8px 10px}.notice{font-size:12px;color:var(--
 .preview{white-space:pre-wrap;background:#101214;color:#f5f5f5;border-radius:12px;padding:14px;font-family:ui-monospace,SFMono-Regular,monospace;font-size:13px;line-height:1.65;overflow:auto}
 .history{border-top:1px solid var(--line);margin-top:10px;padding-top:10px}.entry{padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
 .hidden{display:none!important}.status{font-weight:900;margin:8px 0}.green{color:var(--green)}
-@media(max-width:430px){.two,.batting-grid{grid-template-columns:1fr}.subgrid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:430px){.two{grid-template-columns:1fr}.batting-grid{grid-template-columns:1fr}.subgrid{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
@@ -75,7 +75,7 @@ button.small{font-size:13px;padding:8px 10px}.notice{font-size:12px;color:var(--
 
 <section class="card">
 <label>自チーム打順登録</label>
-<div class="batting-grid" id="battingOrderInputs"></div>
+<div class="notice" style="margin-bottom:8px">打順の右側で守備位置（1〜9）を選べます。守備位置を変更すると、現在のイニング速報に自動で追記されます。</div><div class="batting-grid" id="battingOrderInputs"></div>
 <button class="primary" style="width:100%;margin-top:10px" id="saveBattingOrder">打順を登録</button>
 </section>
 
@@ -158,7 +158,7 @@ const INNINGS=15;
 const STORAGE_KEY="hamamatsuBaseballLive_v12";
 const MIGRATE_KEY="hamamatsuBaseballLive_v11";
 const LEGACY_KEYS=["hamamatsuBaseballLive_v7","hamamatsuBaseballLive_v11"];
-const defaultState={gameTitle:"OPEN戦①",startTime:"",endTime:"",opponent:"相手校",battingFirst:"top",half:"top",inning:1,batter:0,battingOrder:[0,1,2,3,4,5,6,7,8],members:initialMembers.slice(),retired:Array(initialMembers.length).fill(false),result:"",resultGroup:"",position:"",runs:0,comment:"",records:[],scores:{ham:Array(INNINGS).fill(0),opp:Array(INNINGS).fill(0)},manualScores:{ham:Array(INNINGS).fill(0),opp:Array(INNINGS).fill(0)},bases:[false,false,false]};
+const defaultState={gameTitle:"OPEN戦①",startTime:"",endTime:"",opponent:"相手校",battingFirst:"top",half:"top",inning:1,batter:0,battingOrder:[0,1,2,3,4,5,6,7,8],battingPositions:Array(9).fill(""),members:initialMembers.slice(),retired:Array(initialMembers.length).fill(false),result:"",resultGroup:"",position:"",runs:0,comment:"",records:[],scores:{ham:Array(INNINGS).fill(0),opp:Array(INNINGS).fill(0)},manualScores:{ham:Array(INNINGS).fill(0),opp:Array(INNINGS).fill(0)},bases:[false,false,false]};
 let state=loadState(); const $=id=>document.getElementById(id);
 for(let i=1;i<=INNINGS;i++)$("inning").insertAdjacentHTML("beforeend",`<option value="${i}">${i}回</option>`);
 
@@ -180,6 +180,7 @@ function loadState(){
    x.retired=Array.isArray(s.retired)?x.members.map((_,i)=>!!s.retired[i]):x.members.map(()=>false);
    while(x.retired.length<x.members.length)x.retired.push(false);
    x.battingOrder=Array.isArray(s.battingOrder)&&s.battingOrder.length===9?s.battingOrder.map(n=>Math.max(0,Math.min(x.members.length-1,Number(n)||0))):clone(defaultState.battingOrder);
+   x.battingPositions=Array.isArray(s.battingPositions)&&s.battingPositions.length===9?s.battingPositions.map(v=>String(v||"")):Array(9).fill("");
    x.batter=Math.min(8,Math.max(0,Number(s.batter)||0));
    x.result=s.result||"";x.resultGroup=s.resultGroup||"";x.position=s.position||"";
    x.runs=Math.max(0,Number(s.runs)||0);x.comment=s.comment||"";
@@ -212,9 +213,22 @@ function renderBattingOrder(){
  $("battingOrderInputs").innerHTML=state.battingOrder.map((idx,i)=>{
    const selectedInactive=(state.retired[idx]&&state.members[idx])?`<option value="${idx}" selected>${state.members[idx]}（卒業・退部）</option>`:"";
    const options=active.map(x=>`<option value="${x.i}" ${x.i===idx?"selected":""}>${x.n}</option>`).join("");
-   return `<div class="batting-item"><div class="batting-no">${i+1}番</div><select data-order="${i}">${selectedInactive}${options}</select></div>`;
+   const posOptions=["","投","捕","一","二","三","遊","左","中","右"].map((p,j)=>`<option value="${p}" ${p===(state.battingPositions[i]||"")?"selected":""}>${p?`${j} ${p}`:"守備位置"}</option>`).join("");
+   return `<div class="batting-item"><div class="batting-no">${i+1}番</div><select data-order="${i}" aria-label="${i+1}番打者">${selectedInactive}${options}</select><select class="position-select" data-batting-position="${i}" aria-label="${i+1}番守備位置">${posOptions}</select></div>`;
  }).join("");
- document.querySelectorAll("#battingOrderInputs select").forEach(s=>s.onchange=e=>{state.battingOrder[+e.target.dataset.order]=+e.target.value;persist();renderLineup()});
+ document.querySelectorAll("#battingOrderInputs select[data-order]").forEach(s=>s.onchange=e=>{state.battingOrder[+e.target.dataset.order]=+e.target.value;persist();renderLineup()});
+ document.querySelectorAll("#battingOrderInputs select[data-batting-position]").forEach(s=>s.onchange=e=>{
+   const slot=+e.target.dataset.battingPosition, next=e.target.value, prev=state.battingPositions[slot]||"";
+   if(next===prev)return;
+   const player=state.members[state.battingOrder[slot]]||`${slot+1}番`;
+   state.battingPositions[slot]=next;
+   if(prev){
+     state.records.push({kind:"defense",inning:state.inning,half:state.half,text:`守備位置変更：${player}　${prev}→${next||"守備解除"}`,runs:0});
+   }else if(next){
+     state.records.push({kind:"defense",inning:state.inning,half:state.half,text:`守備位置：${player}　${next}`,runs:0});
+   }
+   persist();renderLineup();renderCurrent();renderPreview();
+ });
 }
 function renderMembers(){
  const box=$("memberList");
