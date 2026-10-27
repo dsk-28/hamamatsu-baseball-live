@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
-<title>浜松南 野球速報 v14</title>
+<title>浜松南 野球速報 v15</title>
 <style>
 :root{--bg:#f5f7fa;--card:#fff;--text:#17202a;--muted:#667085;--line:#dfe3e8;--accent:#1677ff;--danger:#e5484d;--green:#16803c}
 *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif}
@@ -16,7 +16,7 @@
 .score{border-collapse:collapse;min-width:680px;width:100%;font-size:13px;text-align:center}
 .score th,.score td{border-right:1px solid var(--line);padding:6px 7px;white-space:nowrap}
 .score th:first-child,.score td:first-child{position:sticky;left:0;background:#fff;text-align:left;font-weight:900;min-width:92px}
-.score .total{font-size:15px;font-weight:900}.score-input{width:42px;min-width:42px;border:0;background:transparent;padding:4px 0;text-align:center;font-weight:800;font-size:15px;border-radius:6px}.score-input:focus{outline:2px solid var(--accent);background:#eef4ff}
+.score .total{font-size:15px;font-weight:900;border-left:4px double #98a2b3;padding-left:18px;padding-right:18px;min-width:54px}.score-input{width:42px;min-width:42px;border:0;background:transparent;padding:4px 0;text-align:center;font-weight:800;font-size:15px;border-radius:6px}.score-input:focus{outline:2px solid var(--accent);background:#eef4ff}
 .game-head{padding:2px 0 8px;text-align:center}.game-title{font-size:18px;font-weight:900}.game-match{font-size:16px;font-weight:800;margin-top:2px}.game-time{font-size:14px;color:var(--muted);margin-top:3px}
 .score-edit-panel{margin:8px 12px 0;padding:10px;scroll-margin-top:115px}
 main{padding:12px}.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
@@ -120,18 +120,7 @@ button.small{font-size:13px;padding:8px 10px}.notice{font-size:12px;color:var(--
 <section class="card">
 <label>現在のイニング速報（表・裏）</label>
 <div id="currentInning" class="history"></div>
-<div class="section-title" style="margin-top:14px">走塁プレーを追記</div>
-<div class="event-grid">
-<button id="stealEvent">盗塁</button><button id="pickoffEvent">牽制アウト</button>
-<button id="wildEvent">暴投・捕逸</button><button id="advanceEvent">進塁</button>
-<button id="scoreEvent">走者生還（得点）</button><button id="runnerComment">自由入力</button>
-</div>
-<div style="margin-top:8px"><textarea id="runnerCommentText" rows="2" placeholder="例：二盗成功、三盗を試み牽制アウト、暴投で二塁へ進塁"></textarea></div>
-<button class="primary" style="width:100%;margin-top:8px" id="saveRunnerEvent">現在の速報に追記</button>
-<div class="section-title" style="margin-top:16px">相手校の投手交代</div>
-<div class="notice" style="margin-bottom:8px">相手校の投手が交代したとき、名前を入力して現在のイニング速報に記録できます。</div>
-<div class="two"><div><label>交代前の投手（任意）</label><input id="oppPitcherOut" placeholder="交代前の投手名"></div><div><label>新しい投手</label><input id="oppPitcherIn" placeholder="交代後の投手名"></div></div>
-<button class="primary" style="width:100%;margin-top:8px" id="saveOppPitcherChange">相手校の投手交代を記録</button>
+<div class="notice" style="margin-top:12px">走塁記録・投手交代は、下のLINE送信用速報プレビュー内から入力してください。</div>
 <div class="two" style="margin-top:10px">
 <button id="nextHalf" class="primary">次の攻撃へ</button>
 <button id="undoPlay" class="danger">1プレー戻す</button>
@@ -142,6 +131,18 @@ button.small{font-size:13px;padding:8px 10px}.notice{font-size:12px;color:var(--
 <section class="card">
 <label>LINE送信用速報（1イニング・表＋裏）</label>
 <div id="preview" class="preview"></div>
+<div class="section-title" style="margin-top:14px">この速報に走塁プレーを追記</div>
+<label>追記する打者・プレー（任意）</label><select id="runnerTarget"><option value="">新しい行として記録</option></select>
+<div class="event-grid">
+<button id="stealEvent">盗塁</button><button id="pickoffEvent">牽制アウト</button>
+<button id="wildEvent">暴投・捕逸</button><button id="advanceEvent">進塁</button>
+<button id="scoreEvent">走者生還（得点）</button><button id="runnerComment">自由入力</button>
+</div>
+<div style="margin-top:8px"><textarea id="runnerCommentText" rows="2" placeholder="例：二盗成功、三盗を試み牽制アウト、暴投で二塁へ進塁"></textarea></div>
+<button class="primary" style="width:100%;margin-top:8px" id="saveRunnerEvent">プレビューに1回だけ追記</button>
+<div class="section-title" style="margin-top:14px">相手校の投手交代</div>
+<div class="notice" style="margin-bottom:8px">選手名は入力せず、交代の事実だけを記録します。</div>
+<button class="primary" style="width:100%" id="saveOppPitcherChange">相手校の投手交代を記録</button>
 <button class="primary" style="width:100%;margin-top:10px" id="copy">この1イニング（表＋裏）をコピー</button>
 </section>
 </main>
@@ -217,7 +218,7 @@ function renderBattingOrder(){
  $("battingOrderInputs").innerHTML=state.battingOrder.map((idx,i)=>{
    const selectedInactive=(state.retired[idx]&&state.members[idx])?`<option value="${idx}" selected>${state.members[idx]}（卒業・退部）</option>`:"";
    const options=active.map(x=>`<option value="${x.i}" ${x.i===idx?"selected":""}>${x.n}</option>`).join("");
-   const posOptions=["","1 投","2 捕","3 一","4 二","5 三","6 遊","7 左","8 中","9 右","DH"].map(p=>`<option value="${p}" ${p===(state.battingPositions[i]||"")?"selected":""}>${p||"守備位置"}</option>`).join("");
+   const posOptions=["","DH","1 投","2 捕","3 一","4 二","5 三","6 遊","7 左","8 中","9 右"].map(p=>`<option value="${p}" ${p===(state.battingPositions[i]||"")?"selected":""}>${p==="DH"?"DH 指名打者":(p||"守備位置")}</option>`).join("");
    return `<div class="batting-item"><div class="batting-no">${i+1}番</div><select data-order="${i}" aria-label="${i+1}番打者">${selectedInactive}${options}</select><select class="position-select" data-batting-position="${i}" aria-label="${i+1}番守備位置">${posOptions}</select></div>`;
  }).join("");
  document.querySelectorAll("#battingOrderInputs select[data-order]").forEach(s=>s.onchange=e=>{state.battingOrder[+e.target.dataset.order]=+e.target.value;persist();renderLineup()});
@@ -227,9 +228,9 @@ function renderBattingOrder(){
    const player=state.members[state.battingOrder[slot]]||`${slot+1}番`;
    state.battingPositions[slot]=next;
    if(prev){
-     state.records.push({kind:"defense",inning:state.inning,half:state.half,text:`守備位置変更：${player}　${prev}→${next||"守備解除"}`,runs:0});
+     state.records.push({kind:"defense",inning:state.inning,half:state.half,text:`${player}　${prev.replace(/^DH.*$/, "DH")||"未設定"}→${next?(next==="DH"?"DH":next):"解除"}`,runs:0});
    }else if(next){
-     state.records.push({kind:"defense",inning:state.inning,half:state.half,text:`守備位置：${player}　${next}`,runs:0});
+     state.records.push({kind:"defense",inning:state.inning,half:state.half,text:`${player}　${next==="DH"?"DH":next}`,runs:0});
    }
    persist();renderLineup();renderCurrent();renderPreview();
  });
@@ -302,8 +303,8 @@ function renderPreview(){
  let lastInning=Math.max(1,state.inning);
  for(let i=INNINGS-1;i>=0;i--){if((state.scores.ham[i]||state.scores.opp[i])!==0 || state.records.some(r=>r.inning===i+1)){lastInning=Math.max(lastInning,i+1);break}}
  const scoreLine=a=>a.slice(0,lastInning).map(n=>String(n)).join("");
- lines.push(firstLabel.padEnd(4," ")+" "+scoreLine(first)+" "+total(first));
- lines.push(secondLabel.padEnd(4," ")+" "+scoreLine(second)+" "+total(second));
+ lines.push(firstLabel.padEnd(4," ")+" "+scoreLine(first)+"    "+total(first));
+ lines.push(secondLabel.padEnd(4," ")+" "+scoreLine(second)+"    "+total(second));
  lines.push("");
  lines.push(`【${state.inning}回表】`);
  if(top.length)top.forEach(r=>lines.push(r.text));else lines.push("（記録なし）");
@@ -312,7 +313,14 @@ function renderPreview(){
  if(bottom.length)bottom.forEach(r=>lines.push(r.text));else lines.push("（記録なし）");
  $("preview").textContent=lines.join("\n")
 }
-function renderAll(){renderScore();renderBattingOrder();renderMembers();renderLineup();renderResults();renderBases();renderCurrent();renderPreview();$("gameTitle").value=state.gameTitle;$("opponent").value=state.opponent;$("battingFirst").value=state.battingFirst;$("startTime").value=state.startTime;$("endTime").value=state.endTime;$("inning").value=state.inning;renderGameHeader()}
+function renderRunnerTargets(){
+ const select=$("runnerTarget"); if(!select)return;
+ const old=runnerTargetIndex;
+ const records=state.records.map((r,i)=>({r,i})).filter(x=>x.r.inning===state.inning&&x.r.half===state.half);
+ select.innerHTML='<option value="">新しい行として記録</option>'+records.map(x=>`<option value="${x.i}">${x.r.text.slice(0,42)}</option>`).join("");
+ if(old!==""&&records.some(x=>String(x.i)===String(old)))select.value=String(old);else {select.value="";runnerTargetIndex=""}
+}
+function renderAll(){renderScore();renderBattingOrder();renderMembers();renderLineup();renderResults();renderBases();renderCurrent();renderPreview();renderRunnerTargets();$("gameTitle").value=state.gameTitle;$("opponent").value=state.opponent;$("battingFirst").value=state.battingFirst;$("startTime").value=state.startTime;$("endTime").value=state.endTime;$("inning").value=state.inning;renderGameHeader()}
 function renderGameHeader(){const title=state.gameTitle||"試合速報";const opp=state.opponent||"相手校";let t=state.endTime?`試合終了　${state.endTime}`:(state.startTime?`試合開始　${state.startTime}`:"試合中");$("lineGameHeader").innerHTML=`<div class="game-title">${title}</div><div class="game-match">浜松南－${opp}</div><div class="game-time">${t}</div>`}
 
 $("saveAtBat").onclick=()=>{
@@ -338,11 +346,13 @@ $("endTime").oninput=e=>{state.endTime=e.target.value;persist();renderPreview();
 function nowHM(){const d=new Date();return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")}
 $("setStartNow").onclick=()=>{state.startTime=nowHM();state.endTime="";persist();renderAll()};
 $("setEndNow").onclick=()=>{state.endTime=nowHM();persist();renderAll()};
-$("runnerCommentText").oninput=e=>{state.comment=e.target.value;persist()};
-let runnerEvent="";
-$("stealEvent").onclick=()=>runnerEvent="盗塁";$("pickoffEvent").onclick=()=>runnerEvent="牽制アウト";$("wildEvent").onclick=()=>runnerEvent="暴投・捕逸";$("advanceEvent").onclick=()=>runnerEvent="進塁";$("scoreEvent").onclick=()=>runnerEvent="走者生還（得点）";$("runnerComment").onclick=()=>runnerEvent="自由入力";
-$("saveRunnerEvent").onclick=()=>{let text=runnerEvent;if(!text&&$("runnerCommentText").value.trim())text="走者プレー";if($("runnerCommentText").value.trim())text+=(text?"：":"")+$("runnerCommentText").value.trim();if(!text){alert("走者プレーを選択または入力してください。");return}let runs=text.includes("生還")?1:0;state.records.push({kind:"runner",inning:state.inning,half:state.half,text:`【走者】${text}`,runs});recalcScores();runnerEvent="";$("runnerCommentText").value="";persist();renderAll();};
-$("saveOppPitcherChange").onclick=()=>{const before=$("oppPitcherOut").value.trim(), after=$("oppPitcherIn").value.trim();if(!before&&!after){alert("交代前または交代後の投手名を入力してください。");return}let text=`【相手校 投手交代】${before?before+" → ":""}${after||"投手交代"}`;state.records.push({kind:"defense",inning:state.inning,half:state.half,text,runs:0});$("oppPitcherOut").value=after;$("oppPitcherIn").value="";persist();renderAll();};
+$("runnerCommentText").oninput=()=>{};
+let runnerEvent="";let runnerTargetIndex="";
+$("runnerTarget").onchange=e=>{runnerTargetIndex=e.target.value};
+function chooseRunnerEvent(id,value){runnerEvent=value;document.querySelectorAll("#stealEvent,#pickoffEvent,#wildEvent,#advanceEvent,#scoreEvent,#runnerComment").forEach(b=>b.classList.toggle("selected",b.id===id))}
+$("stealEvent").onclick=()=>chooseRunnerEvent("stealEvent","盗塁");$("pickoffEvent").onclick=()=>chooseRunnerEvent("pickoffEvent","牽制アウト");$("wildEvent").onclick=()=>chooseRunnerEvent("wildEvent","暴投・捕逸");$("advanceEvent").onclick=()=>chooseRunnerEvent("advanceEvent","進塁");$("scoreEvent").onclick=()=>chooseRunnerEvent("scoreEvent","走者生還（得点）");$("runnerComment").onclick=()=>chooseRunnerEvent("runnerComment","自由入力");
+$("saveRunnerEvent").onclick=()=>{if($("saveRunnerEvent").dataset.saving==="1")return;let text=runnerEvent;const detail=$("runnerCommentText").value.trim();if(!text&&detail)text="走者プレー";if(detail)text+=(text?"：":"")+detail;if(!text){alert("走塁プレーを選択するか、内容を入力してください。");return}$("saveRunnerEvent").dataset.saving="1";const runs=text.includes("生還")?1:0;const target=runnerTargetIndex!==""?state.records[Number(runnerTargetIndex)]:null;if(target&&target.inning===state.inning&&target.half===state.half){target.text+=`　${text}`;target.runs=(Number(target.runs)||0)+runs;}else{state.records.push({kind:"runner",inning:state.inning,half:state.half,text:`【走者】${text}`,runs});}recalcScores();runnerEvent="";runnerTargetIndex="";$("runnerCommentText").value="";document.querySelectorAll("#stealEvent,#pickoffEvent,#wildEvent,#advanceEvent,#scoreEvent,#runnerComment").forEach(b=>b.classList.remove("selected"));persist();renderAll();setTimeout(()=>$("saveRunnerEvent").dataset.saving="0",700)};
+$("saveOppPitcherChange").onclick=()=>{if($("saveOppPitcherChange").dataset.saving==="1")return;$("saveOppPitcherChange").dataset.saving="1";state.records.push({kind:"defense",inning:state.inning,half:state.half,text:"【相手校】投手交代",runs:0});persist();renderAll();setTimeout(()=>$("saveOppPitcherChange").dataset.saving="0",700)};
 $("undoPlay").onclick=()=>{const idx=state.records.map((r,i)=>({r,i})).reverse().find(x=>x.r.inning===state.inning&&x.r.half===state.half);if(!idx){alert("この攻撃に戻せるプレーはありません。");return}if(!confirm(`「${idx.r.text}」を1プレー戻します。よろしいですか？`))return;state.records.splice(idx.i,1);recalcScores();resetAtBat();persist();renderAll();};
 $("nextHalf").onclick=()=>{if(state.half==="top")state.half="bottom";else{state.half="top";state.inning=Math.min(INNINGS,state.inning+1)}resetAtBat();persist();renderAll();window.scrollTo({top:0,behavior:"smooth"})};
 $("clearCurrent").onclick=()=>{if(!confirm("現在の攻撃の速報をすべて削除しますか？スコアもこの攻撃分だけ戻します。"))return;state.records=state.records.filter(r=>!(r.inning===state.inning&&r.half===state.half));recalcScores();state.bases=[false,false,false];resetAtBat();persist();renderAll()};
